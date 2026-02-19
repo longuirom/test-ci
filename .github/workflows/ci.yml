@@ -92,8 +92,3 @@ jobs:
 
           curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -F document=@${OUT_NAME}.zip
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.FINAL_ZIP }}
-          path: AnyKernel3/
