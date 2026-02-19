@@ -49,6 +49,8 @@ jobs:
           # tar -xf clang-r547379.tar.gz -C toolchain
           # echo "$PWD/toolchain/bin" >> $GITHUB_PATH
 
+          cd repo
+
           git clone --depth=1 -b v1.1.1-susfs1.5.5 https://github.com/longuirom/KernelSU-Next KernelSU
 
           mkdir -p "$HOME/toolchains/neutron-clang"
