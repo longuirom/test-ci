@@ -78,6 +78,7 @@ jobs:
 
       - name: Package AnyKernel3
         run: |
+          cd repo
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
           cp arch/arm64/boot/Image AnyKernel3/
           
