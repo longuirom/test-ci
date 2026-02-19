@@ -1,0 +1,7 @@
+- name: CI
+  uses: actions/checkout@v4
+  with:
+    repository: ${{ secrets.REPO }}
+    token: ${{ secrets.PRIVATE_TOKEN }}
+    path: repo
+    fetch-depth: 1
