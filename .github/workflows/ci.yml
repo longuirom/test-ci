@@ -10,11 +10,11 @@ jobs:
       fail-fast: false
       matrix:
         device: [a51xx, m31nsxx, m31snsxx, m21dd, f41dd]
-        ksu: [ksu, 'non-ksu']
-        susfs: [susfs, 'non-susfs']
+        ksu: [_ksu, '']
+        susfs: [_susfs, '']
         exclude:
-          - ksu: non-ksu
-            susfs: susfs
+          - ksu: ''
+            susfs: _susfs
 
     name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }}"
 
@@ -51,7 +51,11 @@ jobs:
 
           cd repo
 
-          git clone --depth=1 -b v1.1.1-susfs1.5.5 https://github.com/longuirom/KernelSU-Next KernelSU
+          if [ "${{ matrix.susfs }}" = "" ]; then
+            git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
+          else
+            git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+          fi
 
           mkdir -p "$HOME/toolchains/neutron-clang"
           cd "$HOME/toolchains/neutron-clang"
@@ -64,10 +68,10 @@ jobs:
 
           make exynos9610-${{ matrix.device }}_defconfig
           
-          if [ "${{ matrix.ksu }}" = "non-ksu" ]; then
+          if [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
           else
-            if [ "${{ matrix.susfs }}" = "non-susfs" ]; then
+            if [ "${{ matrix.susfs }}" = "" ]; then
               scripts/config -d CONFIG_KSU_SUSFS
             else
               scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
@@ -82,7 +86,7 @@ jobs:
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
           cp arch/arm64/boot/Image AnyKernel3/
           
-          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}_${{ matrix.ksu }}_${{ matrix.susfs }}"
+          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}"
 
           cd AnyKernel3
           zip -r "${OUT_NAME}.zip" ./*
