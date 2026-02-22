@@ -52,9 +52,9 @@ jobs:
           cd repo
 
           if [ "${{ matrix.susfs }}" = "" ]; then
-            git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
-          else
             git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+          else
+            git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
           fi
 
           mkdir -p "$HOME/toolchains/neutron-clang"
