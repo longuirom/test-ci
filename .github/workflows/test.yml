@@ -1,0 +1,99 @@
+name: build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [a51xx, m31nsxx, m31snsxx, m21dd, f41dd]
+        ksu: [_ksu, '']
+        susfs: [_susfs, '']
+        exclude:
+          - ksu: ''
+            susfs: _susfs
+
+    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }}"
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.REPO }}
+          ref: refresh-dev-ksu-rebase
+          token: ${{ secrets.PRIVATE_TOKEN }}
+          fetch-depth: 1
+          path: repo
+          persist-credentials: false
+
+      - name: Setup environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bison flex libssl-dev python3 python-is-python3 libarchive-tools zstd make unzip zip
+
+          echo "ARCH=arm64" >> $GITHUB_ENV
+          echo "PLATFORM_VERSION=12" >> $GITHUB_ENV
+          echo "ANDROID_MAJOR_VERSION=s" >> $GITHUB_ENV
+          echo "LLVM=1" >> $GITHUB_ENV
+          echo "KBUILD_BUILD_USER=Long" >> $GITHUB_ENV
+          echo "KBUILD_BUILD_HOST=Long-CI" >> $GITHUB_ENV
+          echo "TIME=$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Setup toolchain & KernelSU
+        run: |
+          # wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz
+          # mkdir -p toolchain
+          # tar -xf clang-r547379.tar.gz -C toolchain
+          # echo "$PWD/toolchain/bin" >> $GITHUB_PATH
+
+          cd repo
+
+          if [ "${{ matrix.susfs }}" = "" ]; then
+            git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
+          else
+            git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+          fi
+
+          mkdir -p "$HOME/toolchains/neutron-clang"
+          cd "$HOME/toolchains/neutron-clang"
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
+          echo "$HOME/toolchains/neutron-clang/bin" >> $GITHUB_PATH
+
+      - name: Build kernel
+        run: |
+          cd repo
+
+          make exynos9610-${{ matrix.device }}_defconfig
+          
+          if [ "${{ matrix.ksu }}" = "" ]; then
+            scripts/config -d CONFIG_KSU
+          else
+            if [ "${{ matrix.susfs }}" = "" ]; then
+              scripts/config -d CONFIG_KSU_SUSFS
+            else
+              scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
+            fi
+          fi
+          
+          make -j$(nproc)
+
+      - name: Package AnyKernel3
+        run: |
+          cd repo
+          git clone --depth=1 https://github.com/longuirom/AnyKernel3
+          cp arch/arm64/boot/Image AnyKernel3/
+          
+          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}"
+
+          cd AnyKernel3
+          zip -r "${OUT_NAME}.zip" ./*
+          cd ..
+          cp "AnyKernel3/${OUT_NAME}.zip" ./
+
+          echo "FINAL_ZIP=${OUT_NAME}" >> $GITHUB_ENV
+
+          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" -F chat_id=${{ secrets.TELEGRAM_CHAT_ID_TEST }} -F document=@${OUT_NAME}.zip
+
