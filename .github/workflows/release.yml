@@ -12,11 +12,16 @@ jobs:
         device: [a51xx, m31nsxx, m31snsxx, m21dd, f41dd]
         ksu: [_ksu, '']
         susfs: [_susfs, '']
+        debug: [_debug, '']
         exclude:
           - ksu: ''
             susfs: _susfs
+          - susfs: _susfs
+            debug: _debug
+          - ksu: ''
+            debug: _debug
 
-    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }}"
+    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
 
     steps:
       - name: Checkout repo
@@ -44,10 +49,10 @@ jobs:
 
       - name: Setup toolchain & KernelSU
         run: |
-          # wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz
-          # mkdir -p toolchain
-          # tar -xf clang-r547379.tar.gz -C toolchain
-          # echo "$PWD/toolchain/bin" >> $GITHUB_PATH
+          curl -o clang.tar.gz -L https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz
+          mkdir -p toolchain
+          tar -xf clang.tar.gz -C toolchain
+          echo "$PWD/toolchain/bin" >> $GITHUB_PATH
 
           cd repo
 
@@ -57,16 +62,21 @@ jobs:
             git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
           fi
 
-          mkdir -p "$HOME/toolchains/neutron-clang"
-          cd "$HOME/toolchains/neutron-clang"
-          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
-          echo "$HOME/toolchains/neutron-clang/bin" >> $GITHUB_PATH
+          # mkdir -p "$HOME/toolchains/neutron-clang"
+          # cd "$HOME/toolchains/neutron-clang"
+          # bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
+          # echo "$HOME/toolchains/neutron-clang/bin" >> $GITHUB_PATH
 
       - name: Build kernel
         run: |
           cd repo
 
-          make exynos9610-${{ matrix.device }}_defconfig
+          if [ "${{ matrix.debug }}" = "debug" ]; then
+            scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ matrix.device }}_defconfig arch/arm64/configs/debug_defconfig
+            make olddefconfig
+          else
+            make exynos9610-${{ matrix.device }}_defconfig
+          fi
           
           if [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
@@ -86,7 +96,7 @@ jobs:
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
           cp arch/arm64/boot/Image AnyKernel3/
           
-          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}"
+          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}"
 
           cd AnyKernel3
           zip -r "${OUT_NAME}.zip" ./*
