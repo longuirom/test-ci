@@ -44,9 +44,9 @@ jobs:
 
       - name: Setup toolchain & KernelSU
         run: |
-          wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz
+          curl -o clang.tar.gz -L https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz
           mkdir -p toolchain
-          tar -xf clang-r547379.tar.gz -C toolchain
+          tar -xf clang.tar.gz -C toolchain
           echo "$PWD/toolchain/bin" >> $GITHUB_PATH
 
           cd repo
