@@ -12,7 +12,7 @@ jobs:
         device: [a51xx, m31nsxx, m31snsxx, m21dd, f41dd]
         ksu: [_ksu, '']
         susfs: [_susfs, '']
-        debug: [_debug]
+        debug: [_debug, '']
         exclude:
           - ksu: ''
             susfs: _susfs
