@@ -12,11 +12,16 @@ jobs:
         device: [a51xx, m31nsxx, m31snsxx, m21dd, f41dd]
         ksu: [_ksu, '']
         susfs: [_susfs, '']
+        debug: [_debug]
         exclude:
           - ksu: ''
             susfs: _susfs
+          - susfs: _susfs
+            debug: _debug
+          - ksu: ''
+            debug: _debug
 
-    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }}"
+    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
 
     steps:
       - name: Checkout repo
@@ -66,7 +71,12 @@ jobs:
         run: |
           cd repo
 
-          make exynos9610-${{ matrix.device }}_defconfig
+          if [ "${{ matrix.debug }}" = "debug" ]; then
+            scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ matrix.device }}_defconfig arch/arm64/configs/debug_defconfig
+            make olddefconfig
+          else
+            make exynos9610-${{ matrix.device }}_defconfig
+          fi
           
           if [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
@@ -86,7 +96,7 @@ jobs:
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
           cp arch/arm64/boot/Image AnyKernel3/
           
-          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}"
+          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}"
 
           cd AnyKernel3
           zip -r "${OUT_NAME}.zip" ./*
