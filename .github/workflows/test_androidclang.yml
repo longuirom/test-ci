@@ -71,7 +71,7 @@ jobs:
         run: |
           cd repo
 
-          if [ "${{ matrix.debug }}" = "debug" ]; then
+          if [ "${{ matrix.debug }}" = "_debug" ]; then
             scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ matrix.device }}_defconfig arch/arm64/configs/debug_defconfig
             make olddefconfig
           else
