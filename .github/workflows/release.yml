@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ secrets.REPO }}
-          ref: refresh-dev-ksu-rebase
+          ref: dev
           token: ${{ secrets.PRIVATE_TOKEN }}
           fetch-depth: 1
           path: repo
