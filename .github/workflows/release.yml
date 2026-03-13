@@ -49,10 +49,10 @@ jobs:
 
       - name: Setup toolchain & KernelSU
         run: |
-          curl -o clang.tar.gz -L https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz
-          mkdir -p toolchain
-          tar -xf clang.tar.gz -C toolchain
-          echo "$PWD/toolchain/bin" >> $GITHUB_PATH
+          # curl -o clang.tar.gz -L https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz
+          # mkdir -p toolchain
+          # tar -xf clang.tar.gz -C toolchain
+          # echo "$PWD/toolchain/bin" >> $GITHUB_PATH
 
           cd repo
 
@@ -62,10 +62,10 @@ jobs:
             git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
           fi
 
-          # mkdir -p "$HOME/toolchains/neutron-clang"
-          # cd "$HOME/toolchains/neutron-clang"
-          # bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
-          # echo "$HOME/toolchains/neutron-clang/bin" >> $GITHUB_PATH
+          mkdir -p "$HOME/toolchains/neutron-clang"
+          cd "$HOME/toolchains/neutron-clang"
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
+          echo "$HOME/toolchains/neutron-clang/bin" >> $GITHUB_PATH
 
       - name: Build kernel
         run: |
