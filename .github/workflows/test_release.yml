@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ secrets.REPO }}
-          ref: dev-2
+          ref: ${{ vars.BRANCH }}
           token: ${{ secrets.PRIVATE_TOKEN }}
           fetch-depth: 1
           path: repo
