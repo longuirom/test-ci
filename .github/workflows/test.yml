@@ -105,5 +105,5 @@ jobs:
 
           echo "FINAL_ZIP=${OUT_NAME}" >> $GITHUB_ENV
 
-          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" -F chat_id=${{ secrets.TELEGRAM_CHAT_ID_TEST }} -F document=@${OUT_NAME}.zip
-
+          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" -F chat_id=${{ secrets.TELEGRAM_CHAT_ID_TEST }} -F document=@${OUT_NAME}.zip -o response.json
+          curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" -H "Content-Type: application/json" -d @response.json
