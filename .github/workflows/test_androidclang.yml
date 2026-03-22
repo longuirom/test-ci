@@ -96,7 +96,7 @@ jobs:
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
           cp arch/arm64/boot/Image AnyKernel3/
           
-          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}${{ vars.PREFIX }}"
+          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}"
 
           cd AnyKernel3
           zip -r "${OUT_NAME}.zip" ./*
