@@ -29,7 +29,7 @@ jobs:
         with:
           repository: ${{ secrets.REPO }}
           ref: ${{ vars.BRANCH }}
-          token: ${{ secrets.PRIVATE_TOKEN }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           fetch-depth: 1
           path: repo
           persist-credentials: false
