@@ -12,14 +12,14 @@ jobs:
         device: [a51xx, m31nsxx, m31snsxx, m21dd, f41dd]
         ksu: [_ksu, '']
         susfs: [_susfs, '']
-        debug: [_debug, '']
+        debug: [_permissivedebug, '']
         exclude:
           - ksu: ''
             susfs: _susfs
           - susfs: _susfs
-            debug: _debug
+            debug: _permissivedebug
           - ksu: ''
-            debug: _debug
+            debug: _permissivedebug
 
     name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
 
@@ -71,7 +71,7 @@ jobs:
         run: |
           cd repo
 
-          if [ "${{ matrix.debug }}" = "_debug" ]; then
+          if [ "${{ matrix.debug }}" = "_permissivedebug" ]; then
             scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ matrix.device }}_defconfig arch/arm64/configs/debug_defconfig
             make olddefconfig
           else
@@ -105,7 +105,7 @@ jobs:
 
           echo "FINAL_ZIP=${OUT_NAME}" >> $GITHUB_ENV
 
-          if [ "${{ matrix.debug }}" = "_debug" ]; then
+          if [ "${{ matrix.debug }}" = "_permissivedebug" ]; then
             curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" -F chat_id=${{ secrets.TELEGRAM_CHAT_ID_TEST }} -F document=@${OUT_NAME}.zip -o response.json
           else
             curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -F document=@${OUT_NAME}.zip -o response.json
