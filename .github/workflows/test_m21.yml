@@ -85,7 +85,6 @@ jobs:
               scripts/config -d CONFIG_KSU_SUSFS
             else
               # scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
-              echo 0
             fi
           fi
           
