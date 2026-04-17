@@ -24,4 +24,5 @@ jobs:
       ksu: ${{ matrix.ksu }}
       susfs: ${{ matrix.susfs }}
       debug: ${{ matrix.debug }}
+    secrets:
       chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
