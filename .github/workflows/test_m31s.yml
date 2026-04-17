@@ -18,6 +18,8 @@ jobs:
           - ksu: ""
             debug: _permissivedebug
 
+    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
+    
     uses: ./.github/workflows/build-common.yml
     with:
       device: ${{ matrix.device }}
