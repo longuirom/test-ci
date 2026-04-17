@@ -26,4 +26,8 @@ jobs:
       debug: ${{ matrix.debug }}
       prefix: "_test"
     secrets:
+      repo: ${{ secrets.REPO }}
+      ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
       chat_id: ${{ secrets.TELEGRAM_CHAT_ID_TEST }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_SAVE_FILE: ${{ secrets.TELEGRAM_SAVE_FILE }}
