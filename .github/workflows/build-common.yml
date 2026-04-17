@@ -19,7 +19,15 @@ on:
         required: false
         type: string
     secrets:
+      repo:
+        required: true
+      ssh_key:
+        required: true
       chat_id:
+        required: true
+      TELEGRAM_BOT_TOKEN:
+        required: true
+      TELEGRAM_SAVE_FILE:
         required: true
 
 jobs:
@@ -30,9 +38,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          repository: ${{ secrets.REPO }}
+          repository: ${{ secrets.repo }}
           ref: ${{ vars.BRANCH }}
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-key: ${{ secrets.ssh_key }}
           fetch-depth: 1
           path: repo
           persist-credentials: false
