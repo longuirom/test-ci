@@ -1,27 +1,30 @@
-name: test-release
+name: Build Common
 
 on:
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      device:
+        required: true
+        type: string
+      ksu:
+        required: true
+        type: string
+      susfs:
+        required: true
+        type: string
+      debug:
+        required: true
+        type: string
+      chat_id:
+        required: true
+        type: string
+      prefix:
+        required: false
+        type: string
 
 jobs:
   build:
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [a51xx, m31nsxx, m31snsxx, m21dd, f41dd]
-        ksu: [_ksu, '']
-        susfs: [_susfs, '']
-        debug: [_permissivedebug, '']
-        exclude:
-          - ksu: ''
-            susfs: _susfs
-          - susfs: _susfs
-            debug: _permissivedebug
-          - ksu: ''
-            debug: _permissivedebug
-
-    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
 
     steps:
       - name: Checkout repo
@@ -49,14 +52,9 @@ jobs:
 
       - name: Setup toolchain & KernelSU
         run: |
-          # curl -o clang.tar.gz -L https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz
-          # mkdir -p toolchain
-          # tar -xf clang.tar.gz -C toolchain
-          # echo "$PWD/toolchain/bin" >> $GITHUB_PATH
-
           cd repo
 
-          if [ "${{ matrix.susfs }}" = "" ]; then
+          if [ "${{ inputs.susfs }}" = "" ]; then
             git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
           else
             git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
@@ -71,23 +69,23 @@ jobs:
         run: |
           cd repo
 
-          if [ "${{ matrix.debug }}" = "_permissivedebug" ]; then
-            scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ matrix.device }}_defconfig arch/arm64/configs/debug_defconfig
+          if [ "${{ inputs.debug }}" = "_permissivedebug" ]; then
+            scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ inputs.device }}_defconfig arch/arm64/configs/debug_defconfig
             make olddefconfig
           else
-            make exynos9610-${{ matrix.device }}_defconfig
+            make exynos9610-${{ inputs.device }}_defconfig
           fi
-          
-          if [ "${{ matrix.ksu }}" = "" ]; then
+
+          if [ "${{ inputs.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
           else
-            if [ "${{ matrix.susfs }}" = "" ]; then
+            if [ "${{ inputs.susfs }}" = "" ]; then
               scripts/config -d CONFIG_KSU_SUSFS
             else
               scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
             fi
           fi
-          
+
           make -j$(nproc)
 
       - name: Package AnyKernel3
@@ -95,15 +93,18 @@ jobs:
           cd repo
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
           cp arch/arm64/boot/Image AnyKernel3/
-          
-          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}_(test)"
+
+          OUT_NAME="LONG_${{ inputs.device }}_${{ env.TIME }}${{ inputs.ksu }}${{ inputs.susfs }}${{ inputs.debug }}${{ inputs.prefix }}"
 
           cd AnyKernel3
           zip -r "${OUT_NAME}.zip" ./*
           cd ..
           cp "AnyKernel3/${OUT_NAME}.zip" ./
 
-          echo "FINAL_ZIP=${OUT_NAME}" >> $GITHUB_ENV
+          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+          -F chat_id=${{ inputs.chat_id }} \
+          -F document=@${OUT_NAME}.zip -o response.json
 
-          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -F document=@${OUT_NAME}.zip -o response.json
-          curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" -H "Content-Type: application/json" -d @response.json
+          curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
+          -H "Content-Type: application/json" \
+          -d @response.json
