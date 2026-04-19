@@ -6,15 +6,6 @@ on:
       device:
         required: true
         type: string
-      ksu:
-        required: true
-        type: string
-      susfs:
-        required: true
-        type: string
-      debug:
-        required: true
-        type: string
       prefix:
         required: false
         type: string
