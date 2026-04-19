@@ -33,6 +33,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        device: ${{ fromJson(inputs.device) }}
+        ksu: [ _ksu, "" ]
+        susfs: [ _susfs, "" ]
+        debug: [ "", _permissivedebug ]
+
+    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
 
     steps:
       - name: Checkout repo

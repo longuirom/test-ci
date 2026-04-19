@@ -5,27 +5,9 @@ on:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [ a51xx, m31nsxx, m31snsxx, m21dd, f41dd ]
-        ksu: [ _ksu, "" ]
-        susfs: [ _susfs, "" ]
-        debug: [ _permissivedebug, "" ]
-        exclude:
-          - ksu: ""
-            debug: _permissivedebug
-          - susfs: ""
-            debug: _permissivedebug
-
-    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
-
     uses: ./.github/workflows/build-common.yml
     with:
-      device: ${{ matrix.device }}
-      ksu: ${{ matrix.ksu }}
-      susfs: ${{ matrix.susfs }}
-      debug: ${{ matrix.debug }}
+      device: '[ "a51xx", "m31nsxx", "m31snsxx", "m21dd", "f41dd" ]'
       prefix: "_test"
     secrets:
       repo: ${{ secrets.REPO }}
