@@ -14,8 +14,8 @@ jobs:
         debug: [ _permissivedebug, "" ]
         exclude:
           - ksu: ""
-            susfs: _susfs
-          - ksu: ""
+            debug: _permissivedebug
+          - susfs: ""
             debug: _permissivedebug
 
     name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
