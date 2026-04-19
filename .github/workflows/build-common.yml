@@ -68,7 +68,7 @@ jobs:
         run: |
           cd repo
 
-          if [ "${{ inputs.susfs }}" = "" ]; then
+          if [ "${{ matrix.susfs }}" = "" ]; then
             git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
           else
             git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
@@ -83,17 +83,17 @@ jobs:
         run: |
           cd repo
 
-          if [ "${{ inputs.debug }}" = "_permissivedebug" ]; then
-            scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ inputs.device }}_defconfig arch/arm64/configs/debug_defconfig
+          if [ "${{ matrix.debug }}" = "_permissivedebug" ]; then
+            scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ matrix.device }}_defconfig arch/arm64/configs/debug_defconfig
             make olddefconfig
           else
-            make exynos9610-${{ inputs.device }}_defconfig
+            make exynos9610-${{ matrix.device }}_defconfig
           fi
 
-          if [ "${{ inputs.ksu }}" = "" ]; then
+          if [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
           else
-            if [ "${{ inputs.susfs }}" = "" ]; then
+            if [ "${{ matrix.susfs }}" = "" ]; then
               scripts/config -d CONFIG_KSU_SUSFS
             else
               scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
@@ -108,7 +108,7 @@ jobs:
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
           cp arch/arm64/boot/Image AnyKernel3/
 
-          OUT_NAME="LONG_${{ inputs.device }}_${{ env.TIME }}${{ inputs.ksu }}${{ inputs.susfs }}${{ inputs.debug }}${{ inputs.prefix }}"
+          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}${{ matrix.prefix }}"
 
           cd AnyKernel3
           zip -r "${OUT_NAME}.zip" ./*
