@@ -62,7 +62,7 @@ jobs:
           echo "LLVM=1" >> $GITHUB_ENV
           echo "KBUILD_BUILD_USER=Long" >> $GITHUB_ENV
           echo "KBUILD_BUILD_HOST=Long-CI" >> $GITHUB_ENV
-          echo "TIME=$(date +%y%m%d)" >> $GITHUB_ENV
+          echo "TIME=$(date +%Y%m%d)" >> $GITHUB_ENV
 
       - name: Setup toolchain & KernelSU
         run: |
