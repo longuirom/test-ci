@@ -91,6 +91,16 @@ jobs:
         run: |
           cd repo
 
+          if [ "${{ matrix.ksu }}" = "_ksuV3" ]; then
+            patch -p1 < ksun_v3_1
+            patch -p1 < ksun_v3_2
+            patch -p1 < ksun_v3_3
+            patch -p1 < ksun_v3_4
+            patch -p1 < ksun_v3_5
+            patch -p1 < ksun_v3_6
+            patch -p1 < ksun_v3_7
+          fi
+
           make exynos9610-${{ matrix.device }}_defconfig
           
           if [ "${{ matrix.debug }}" = "_permissive" ]; then
@@ -99,14 +109,6 @@ jobs:
 
           if [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
-          elif [ "${{ matrix.ksu }}" = "_ksuV3" ]; then
-            patch -p1 < ksun_v3_1
-            patch -p1 < ksun_v3_2
-            patch -p1 < ksun_v3_3
-            patch -p1 < ksun_v3_4
-            patch -p1 < ksun_v3_5
-            patch -p1 < ksun_v3_6
-            patch -p1 < ksun_v3_7
           fi
 
           if [ "${{ matrix.susfs }}" = "" ]; then
