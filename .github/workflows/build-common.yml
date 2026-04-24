@@ -29,13 +29,13 @@ jobs:
         device: ${{ fromJson(inputs.device) }}
         ksu: [ _ksuV1, _ksuV3, "" ]
         susfs: [ _susfs, "" ]
-        debug: [ "", _permissive ]
+        debug: [ _permissive, "" ]
         exclude:
           - ksu: ""
             susfs: _susfs
           - ksu: ""
             debug: _permissive
-          - susfs: ""
+          - susfs: _susfs
             debug: _permissive
 
     name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
