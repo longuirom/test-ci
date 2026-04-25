@@ -8,6 +8,7 @@ jobs:
     uses: ./.github/workflows/build-common.yml
     with:
       device: '[ "a51xx", "m31nsxx", "m31snsxx", "m21dd", "f41dd" ]'
+      prefix: ""
     secrets:
       repo: ${{ secrets.REPO }}
       ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
