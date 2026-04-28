@@ -72,7 +72,7 @@ jobs:
             if [ "${{ matrix.susfs }}" = "" ]; then
               git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
             else
-              git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelS
+              git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
             fi
           elif [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
             if [ "${{ matrix.susfs }}" = "" ]; then
