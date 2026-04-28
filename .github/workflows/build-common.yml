@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         device: ${{ fromJson(inputs.device) }}
-        ksu: [ _ksuV1, _ksuV3, "" ]
+        ksu: [ _ksunV1, _ksunV3, "_resukisu", "" ]
         susfs: [ _susfs, "" ]
         debug: [ _permissive, "" ]
         exclude:
@@ -68,18 +68,22 @@ jobs:
         run: |
           cd repo
 
-          if [ "${{ matrix.susfs }}" = "" ]; then
-            if [ "${{ matrix.ksu }}" = "_ksuV3" ]; then
+          if [ "${{ matrix.ksu }}" = "_ksunV1" ]; then
+            if [ "${{ matrix.susfs }}" = "" ]; then
+              git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+            else
+              git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelS
+            fi
+          elif if [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
+            if [ "${{ matrix.susfs }}" = "" ]; then
               git clone --depth=1 -b legacy https://github.com/longuirom/KernelSU-Next KernelSU
             else
-              git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
-            fi
-          else
-            if [ "${{ matrix.ksu }}" = "_ksuV3" ]; then
               git clone --depth=1 -b legacy_susfs https://github.com/longuirom/KernelSU-Next KernelSU
-            else
-              git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
             fi
+          elif if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
+            git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
+          else
+            git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
           fi
 
           mkdir -p "$HOME/toolchains/neutron-clang"
@@ -91,7 +95,7 @@ jobs:
         run: |
           cd repo
 
-          if [ "${{ matrix.ksu }}" = "_ksuV3" ]; then
+          if [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
             patch -p1 < ksun_v3_1
             patch -p1 < ksun_v3_2
             patch -p1 < ksun_v3_3
@@ -99,6 +103,21 @@ jobs:
             patch -p1 < ksun_v3_5
             patch -p1 < ksun_v3_6
             patch -p1 < ksun_v3_7
+          fi
+
+          if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
+            patch -p1 < ksun_v3_1
+            patch -p1 < ksun_v3_2
+            patch -p1 < ksun_v3_3
+            patch -p1 < ksun_v3_4
+            patch -p1 < ksun_v3_5
+            patch -p1 < ksun_v3_6
+            patch -p1 < ksun_v3_7
+            patch -p1 < resukisu
+            
+            if [ "${{ matrix.susfs }}" = "_susfs" ]; then
+              patch -p1 < resukisu_susfs
+            fi
           fi
 
           make exynos9610-${{ matrix.device }}_defconfig
@@ -114,7 +133,27 @@ jobs:
           if [ "${{ matrix.susfs }}" = "" ]; then
               scripts/config -d CONFIG_KSU_SUSFS
           else
-            scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
+            if if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
+              scripts/config -e KSU_SUSFS
+              scripts/config -e KSU_SUSFS_SUS_PATH
+              scripts/config -e KSU_SUSFS_SUS_MOUNT
+              scripts/config -e KSU_SUSFS_SUS_KSTAT
+              scripts/config -e KSU_SUSFS_SPOOF_UNAME
+              scripts/config -d KSU_SUSFS_ENABLE_LOG
+              scripts/config -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+              scripts/config -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
+              scripts/config -e KSU_SUSFS_OPEN_REDIRECT
+              scripts/config -e KSU_SUSFS_SUS_MAP
+
+              scripts/config -d KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
+              scripts/config -d KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
+              scripts/config -d KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
+              scripts/config -e CONFIG_KSU_MULTI_MANAGER_SUPPORT
+              # scripts/config -e CONFIG_KPM
+              scripts/config -e CONFIG_KSU_MANUAL_HOOK
+            else
+              scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
+            fi
           fi  
 
           make -j$(nproc)
