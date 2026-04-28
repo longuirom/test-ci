@@ -25,20 +25,12 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     strategy:
+      # Ma trận chỉ chạy theo thiết bị để giảm số lượng Jobs thực tế
       matrix:
         device: ${{ fromJson(inputs.device) }}
-        ksu: [ _ksunV1, _ksunV3, "_resukisu", "" ]
-        susfs: [ _susfs, "" ]
-        debug: [ _permissive, "" ]
-        exclude:
-          - ksu: ""
-            susfs: _susfs
-          - ksu: ""
-            debug: _permissive
-          - susfs: _susfs
-            debug: _permissive
+      fail-fast: false
 
-    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
+    name: "Build Group: ${{ matrix.device }}"
 
     steps:
       - name: Checkout repo
@@ -55,7 +47,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y bison flex libssl-dev python3 python-is-python3 libarchive-tools zstd make unzip zip
-
+          
           echo "ARCH=arm64" >> $GITHUB_ENV
           echo "PLATFORM_VERSION=12" >> $GITHUB_ENV
           echo "ANDROID_MAJOR_VERSION=s" >> $GITHUB_ENV
@@ -64,119 +56,115 @@ jobs:
           echo "KBUILD_BUILD_HOST=Long-CI" >> $GITHUB_ENV
           echo "TIME=$(date +%y%m%d)" >> $GITHUB_ENV
 
-      - name: Setup toolchain & KernelSU
+      - name: Setup toolchain
         run: |
-          cd repo
-
-          if [ "${{ matrix.ksu }}" = "_ksunV1" ]; then
-            if [ "${{ matrix.susfs }}" = "" ]; then
-              git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
-            else
-              git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
-            fi
-          elif [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
-            if [ "${{ matrix.susfs }}" = "" ]; then
-              git clone --depth=1 -b legacy https://github.com/longuirom/KernelSU-Next KernelSU
-            else
-              git clone --depth=1 -b legacy_susfs https://github.com/longuirom/KernelSU-Next KernelSU
-            fi
-          elif [ "${{ matrix.ksu }}" = "_resukisu" ]; then
-            git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
-          else
-            git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
-          fi
-
           mkdir -p "$HOME/toolchains/neutron-clang"
           cd "$HOME/toolchains/neutron-clang"
           bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
           echo "$HOME/toolchains/neutron-clang/bin" >> $GITHUB_PATH
 
-      - name: Build kernel
+      - name: Integrated Build Loop
         run: |
           cd repo
-
-          if [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
-            patch -p1 < ksun_v3_1
-            patch -p1 < ksun_v3_2
-            patch -p1 < ksun_v3_3
-            patch -p1 < ksun_v3_4
-            patch -p1 < ksun_v3_5
-            patch -p1 < ksun_v3_6
-            patch -p1 < ksun_v3_7
-          fi
-
-          if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
-            patch -p1 < ksun_v3_1
-            patch -p1 < ksun_v3_2
-            patch -p1 < ksun_v3_3
-            patch -p1 < ksun_v3_4
-            patch -p1 < ksun_v3_5
-            patch -p1 < ksun_v3_6
-            patch -p1 < ksun_v3_7
-            patch -p1 < resukisu
-            
-            if [ "${{ matrix.susfs }}" = "_susfs" ]; then
-              patch -p1 < resukisu_susfs
-            fi
-          fi
-
-          make exynos9610-${{ matrix.device }}_defconfig
           
-          if [ "${{ matrix.debug }}" = "_permissive" ]; then
-            scripts/config -e CONFIG_SECURITY_SELINUX_ALWAYS_PERMISSIVE
-          fi
+          # Clone AnyKernel3 một lần duy nhất bên ngoài vòng lặp
+          git clone --depth=1 https://github.com/longuirom/AnyKernel3 AnyKernel3_Folder
 
-          if [ "${{ matrix.ksu }}" = "" ]; then
-            scripts/config -d CONFIG_KSU
-          fi
+          # Định nghĩa danh sách các biến thể
+          KSU_LIST=("_ksunV1" "_ksunV3" "_resukisu" "")
+          SUSFS_LIST=("_susfs" "")
+          DEBUG_LIST=("_permissive" "")
 
-          if [ "${{ matrix.susfs }}" = "" ]; then
-              scripts/config -d CONFIG_KSU_SUSFS
-          else
-            if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
-              scripts/config -e KSU_SUSFS
-              scripts/config -e KSU_SUSFS_SUS_PATH
-              scripts/config -e KSU_SUSFS_SUS_MOUNT
-              scripts/config -e KSU_SUSFS_SUS_KSTAT
-              scripts/config -e KSU_SUSFS_SPOOF_UNAME
-              scripts/config -d KSU_SUSFS_ENABLE_LOG
-              scripts/config -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
-              scripts/config -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
-              scripts/config -e KSU_SUSFS_OPEN_REDIRECT
-              scripts/config -e KSU_SUSFS_SUS_MAP
+          for ksu in "${KSU_LIST[@]}"; do
+            for susfs in "${SUSFS_LIST[@]}"; do
+              for debug in "${DEBUG_LIST[@]}"; do
+                
+                # --- Logic loại trừ (Exclude) ---
+                if [[ -z "$ksu" && "$susfs" == "_susfs" ]]; then continue; fi
+                if [[ -z "$ksu" && "$debug" == "_permissive" ]]; then continue; fi
+                if [[ "$susfs" == "_susfs" && "$debug" == "_permissive" ]]; then continue; fi
+                
+                echo "========================================================="
+                echo "STARTING BUILD: DEVICE=${{ matrix.device }} KSU=$ksu SUSFS=$susfs DEBUG=$debug"
+                echo "========================================================="
 
-              scripts/config -d KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
-              scripts/config -d KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
-              scripts/config -d KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
-              scripts/config -e CONFIG_KSU_MULTI_MANAGER_SUPPORT
-              # scripts/config -e CONFIG_KPM
-              scripts/config -e CONFIG_KSU_MANUAL_HOOK
-            else
-              scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
-            fi
-          fi  
+                # Reset source và dọn dẹp KSU cũ để tránh xung đột giữa các lần lặp
+                git checkout . 
+                git clean -fd
+                rm -rf KernelSU
 
-          make -j$(nproc)
+                # Clone KSU tương ứng
+                if [ "$ksu" = "_ksunV1" ]; then
+                   if [ "$susfs" = "" ]; then BRANCH="v1.1.1"; else BRANCH="v1.1.1-susfs1.5.11"; fi
+                   git clone --depth=1 -b $BRANCH https://github.com/longuirom/KernelSU-Next KernelSU
+                elif [ "$ksu" = "_ksunV3" ]; then
+                   if [ "$susfs" = "" ]; then BRANCH="legacy"; else BRANCH="legacy_susfs"; fi
+                   git clone --depth=1 -b $BRANCH https://github.com/longuirom/KernelSU-Next KernelSU
+                elif [ "$ksu" = "_resukisu" ]; then
+                   git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
+                else
+                   # Bản No-KSU mặc định (hoặc xử lý tùy ý)
+                   git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+                fi
 
-      - name: Package AnyKernel3
-        run: |
-          if [ "${{ vars.POST_FILE }}" = "true" ]; then
-            cd repo
-            git clone --depth=1 https://github.com/longuirom/AnyKernel3
-            cp arch/arm64/boot/Image AnyKernel3/
+                # Apply Patches
+                if [[ "$ksu" == "_ksunV3" || "$ksu" == "_resukisu" ]]; then
+                  for i in {1..7}; do patch -p1 < "ksun_v3_$i"; done
+                fi
 
-            OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}${{ inputs.prefix }}"
+                if [ "$ksu" = "_resukisu" ]; then
+                  patch -p1 < resukisu
+                  [ "$susfs" = "_susfs" ] && patch -p1 < resukisu_susfs
+                fi
 
-            cd AnyKernel3
-            zip -r "${OUT_NAME}.zip" ./*
-            cd ..
-            cp "AnyKernel3/${OUT_NAME}.zip" ./
+                # Config & Build
+                make exynos9610-${{ matrix.device }}_defconfig
+                
+                [ "$debug" = "_permissive" ] && scripts/config -e CONFIG_SECURITY_SELINUX_ALWAYS_PERMISSIVE
+                [ -z "$ksu" ] && scripts/config -d CONFIG_KSU
+                
+                if [ -n "$susfs" ]; then
+                  if [ "$ksu" = "_resukisu" ]; then
+                    scripts/config -e KSU_SUSFS -e KSU_SUSFS_SUS_PATH -e KSU_SUSFS_SUS_MOUNT -e KSU_SUSFS_SUS_KSTAT -e KSU_SUSFS_SPOOF_UNAME -d KSU_SUSFS_ENABLE_LOG -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG -e KSU_SUSFS_OPEN_REDIRECT -e KSU_SUSFS_SUS_MAP
+                    scripts/config -d KSU_MANUAL_HOOK_AUTO_SETUID_HOOK -d KSU_MANUAL_HOOK_AUTO_INITRC_HOOK -d KSU_MANUAL_HOOK_AUTO_INPUT_HOOK -e CONFIG_KSU_MULTI_MANAGER_SUPPORT -e CONFIG_KSU_MANUAL_HOOK
+                  else
+                    scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
+                  fi
+                else
+                  scripts/config -d CONFIG_KSU_SUSFS
+                fi
 
-            curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id=${{ secrets.chat_id }} \
-            -F document=@${OUT_NAME}.zip -o response.json
+                # Biên dịch
+                make -j$(nproc) LLVM=1
 
-            curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
-            -H "Content-Type: application/json" \
-            -d @response.json
-          fi
+                # Package AnyKernel3 & Upload Telegram
+                if [ -f "arch/arm64/boot/Image" ] && [ "${{ vars.POST_FILE }}" = "true" ]; then
+                  OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${ksu}${susfs}${debug}${{ inputs.prefix }}"
+                  
+                  # Copy Image vào folder AnyKernel3 duy nhất
+                  cp arch/arm64/boot/Image AnyKernel3_Folder/
+                  
+                  cd AnyKernel3_Folder
+                  zip -r "../${OUT_NAME}.zip" ./* -x ".git/*"
+                  cd ..
+                  
+                  # Gửi file qua Telegram
+                  curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+                    -F chat_id=${{ secrets.chat_id }} \
+                    -F document=@${OUT_NAME}.zip -o response.json
+                  
+                  # Lưu log Telegram
+                  curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
+                    -H "Content-Type: application/json" \
+                    -d @response.json
+                  
+                  # Dọn dẹp file zip và Image cũ để chuẩn bị cho biến thể sau
+                  rm "${OUT_NAME}.zip"
+                  rm AnyKernel3_Folder/Image
+                else
+                  echo "BUILD FAILED for $OUT_NAME"
+                fi
+
+              done
+            done
+          done
