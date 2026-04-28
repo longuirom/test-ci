@@ -160,21 +160,23 @@ jobs:
 
       - name: Package AnyKernel3
         run: |
-          cd repo
-          git clone --depth=1 https://github.com/longuirom/AnyKernel3
-          cp arch/arm64/boot/Image AnyKernel3/
+          if [ "${{ vars.POST_FILE }}" = "true" ]; then
+            cd repo
+            git clone --depth=1 https://github.com/longuirom/AnyKernel3
+            cp arch/arm64/boot/Image AnyKernel3/
 
-          OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}${{ inputs.prefix }}"
+            OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}${{ inputs.prefix }}"
 
-          cd AnyKernel3
-          zip -r "${OUT_NAME}.zip" ./*
-          cd ..
-          cp "AnyKernel3/${OUT_NAME}.zip" ./
+            cd AnyKernel3
+            zip -r "${OUT_NAME}.zip" ./*
+            cd ..
+            cp "AnyKernel3/${OUT_NAME}.zip" ./
 
-          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-          -F chat_id=${{ secrets.chat_id }} \
-          -F document=@${OUT_NAME}.zip -o response.json
+            curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+            -F chat_id=${{ secrets.chat_id }} \
+            -F document=@${OUT_NAME}.zip -o response.json
 
-          curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
-          -H "Content-Type: application/json" \
-          -d @response.json
+            curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
+            -H "Content-Type: application/json" \
+            -d @response.json
+          fi
