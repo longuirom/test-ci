@@ -74,13 +74,13 @@ jobs:
             else
               git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelS
             fi
-          elif if [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
+          elif [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
             if [ "${{ matrix.susfs }}" = "" ]; then
               git clone --depth=1 -b legacy https://github.com/longuirom/KernelSU-Next KernelSU
             else
               git clone --depth=1 -b legacy_susfs https://github.com/longuirom/KernelSU-Next KernelSU
             fi
-          elif if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
+          elif [ "${{ matrix.ksu }}" = "_resukisu" ]; then
             git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
           else
             git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
@@ -133,7 +133,7 @@ jobs:
           if [ "${{ matrix.susfs }}" = "" ]; then
               scripts/config -d CONFIG_KSU_SUSFS
           else
-            if if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
+            if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
               scripts/config -e KSU_SUSFS
               scripts/config -e KSU_SUSFS_SUS_PATH
               scripts/config -e KSU_SUSFS_SUS_MOUNT
