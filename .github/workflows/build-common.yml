@@ -144,17 +144,19 @@ jobs:
               scripts/config -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
               scripts/config -e KSU_SUSFS_OPEN_REDIRECT
               scripts/config -e KSU_SUSFS_SUS_MAP
+            else
+              scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
+            fi
+          fi  
 
+          if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
               scripts/config -d KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
               scripts/config -d KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
               scripts/config -d KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
               scripts/config -e CONFIG_KSU_MULTI_MANAGER_SUPPORT
               # scripts/config -e CONFIG_KPM
               scripts/config -e CONFIG_KSU_MANUAL_HOOK
-            else
-              scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
-            fi
-          fi  
+          fi
 
           make -j$(nproc)
 
