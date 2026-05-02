@@ -27,7 +27,8 @@ jobs:
     strategy:
       matrix:
         device: ${{ fromJson(inputs.device) }}
-        ksu: [ _ksunV1, _ksunV3, "_resukisu", "" ]
+        # ksu: [ _ksunV1, _ksunV3, "_resukisu", "" ]
+        ksu: ${{ fromJson(vars.ksu) }}
         susfs: [ _susfs, "" ]
         debug: [ _permissive, "" ]
         exclude:
