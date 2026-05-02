@@ -118,6 +118,7 @@ jobs:
             
             if [ "${{ matrix.susfs }}" = "_susfs" ]; then
               patch -p1 < resukisu_susfs
+              patch -p1 < resukisu_susfs_b6890ee0e84ad196f48e5b43692b7260922c8a90
             fi
           fi
 
