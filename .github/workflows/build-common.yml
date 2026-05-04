@@ -40,13 +40,20 @@ jobs:
             debug: _permissive
 
     name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
+    env:
+      TARGET_REF: ${{ 
+          matrix.ksu == '_ksunV3' && matrix.susfs == 'true' && vars.BRANCH_KSUV3_SUSFS ||
+          matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 ||
+          matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU ||
+          vars.release
+        }}
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
           repository: ${{ secrets.repo }}
-          ref: ${{ vars.BRANCH }}
+          ref: ${{ env.TARGET_REF }}
           ssh-key: ${{ secrets.ssh_key }}
           fetch-depth: 1
           path: repo
@@ -95,32 +102,6 @@ jobs:
       - name: Build kernel
         run: |
           cd repo
-
-          if [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
-            patch -p1 < ksun_v3_1
-            patch -p1 < ksun_v3_2
-            patch -p1 < ksun_v3_3
-            patch -p1 < ksun_v3_4
-            patch -p1 < ksun_v3_5
-            patch -p1 < ksun_v3_6
-            patch -p1 < ksun_v3_7
-          fi
-
-          if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
-            patch -p1 < ksun_v3_1
-            patch -p1 < ksun_v3_2
-            patch -p1 < ksun_v3_3
-            patch -p1 < ksun_v3_4
-            patch -p1 < ksun_v3_5
-            patch -p1 < ksun_v3_6
-            patch -p1 < ksun_v3_7
-            patch -p1 < resukisu
-            
-            if [ "${{ matrix.susfs }}" = "_susfs" ]; then
-              patch -p1 < resukisu_susfs
-              patch -p1 < resukisu_susfs_b6890ee0e84ad196f48e5b43692b7260922c8a90
-            fi
-          fi
 
           make exynos9610-${{ matrix.device }}_defconfig
           
