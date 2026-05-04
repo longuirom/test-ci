@@ -24,10 +24,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+
     strategy:
       matrix:
         device: ${{ fromJson(inputs.device) }}
-        # ksu: [ _ksunV1, _ksunV3, "_resukisu", "" ]
         ksu: ${{ fromJson(vars.ksu) }}
         susfs: [ _susfs, "" ]
         debug: [ _permissive, "" ]
@@ -39,7 +39,8 @@ jobs:
           - susfs: _susfs
             debug: _permissive
 
-    name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
+    name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}"
+
     env:
       TARGET_REF: ${{ 
           matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 ||
@@ -48,56 +49,52 @@ jobs:
         }}
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           repository: ${{ secrets.repo }}
           ref: ${{ env.TARGET_REF }}
           ssh-key: ${{ secrets.ssh_key }}
-          fetch-depth: 1
           path: repo
-          persist-credentials: false
+          fetch-depth: 1
 
-      - name: Setup environment
+      - name: Setup env
         run: |
           sudo apt-get update
-          sudo apt-get install -y bison flex libssl-dev python3 python-is-python3 libarchive-tools zstd make unzip zip
+          sudo apt-get install -y \
+            bison flex libssl-dev python3 python-is-python3 \
+            libarchive-tools zstd make unzip zip
 
           echo "ARCH=arm64" >> $GITHUB_ENV
-          echo "PLATFORM_VERSION=12" >> $GITHUB_ENV
-          echo "ANDROID_MAJOR_VERSION=s" >> $GITHUB_ENV
           echo "LLVM=1" >> $GITHUB_ENV
           echo "KBUILD_BUILD_USER=Long" >> $GITHUB_ENV
-          echo "KBUILD_BUILD_HOST=Long-CI" >> $GITHUB_ENV
+          echo "KBUILD_BUILD_HOST=CI" >> $GITHUB_ENV
           echo "TIME=$(date +%y%m%d)" >> $GITHUB_ENV
 
-      - name: Setup toolchain & KernelSU
+      - name: Setup toolchain + KernelSU
         run: |
           cd repo
 
-          if [ "${{ matrix.ksu }}" = "_ksunV1" ]; then
-            if [ "${{ matrix.susfs }}" = "" ]; then
+          case "${{ matrix.ksu }}_${{ matrix.susfs }}" in
+            "_ksunV1_")
               git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
-              echo clone v1.1.1
-            else
+              ;;
+            "_ksunV1__susfs")
               git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
-              echo clone v1.1.1-susfs1.5.11
-            fi
-          elif [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
-            if [ "${{ matrix.susfs }}" = "" ]; then
+              ;;
+            "_ksunV3_")
               git clone --depth=1 -b legacy https://github.com/longuirom/KernelSU-Next KernelSU
-              echo clone legacy
-            else
+              ;;
+            "_ksunV3__susfs")
               git clone --depth=1 -b legacy_susfs https://github.com/longuirom/KernelSU-Next KernelSU
-              echo clone legacy_susfs
-            fi
-          elif [ "${{ matrix.ksu }}" = "_resukisu" ]; then
-            git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
-            echo clone ReSukiSU
-          else
-            git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
-            echo clone v1.1.1
-          fi
+              ;;
+            "_resukisu_"|"_resukisu__susfs")
+              git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
+              ;;
+            *)
+              git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+              ;;
+          esac
 
           mkdir -p "$HOME/toolchains/neutron-clang"
           cd "$HOME/toolchains/neutron-clang"
@@ -108,69 +105,68 @@ jobs:
         run: |
           cd repo
 
+          # base config
           make exynos9610-${{ matrix.device }}_defconfig
-          
+
+          # debug
           if [ "${{ matrix.debug }}" = "_permissive" ]; then
             scripts/config -e CONFIG_SECURITY_SELINUX_ALWAYS_PERMISSIVE
           fi
 
+          # KSU
           if [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
-            echo "da vao day"
           else
             scripts/config -e CONFIG_KSU
           fi
 
+          # SUSFS (optional - nếu branch default rồi thì không cần)
           if [ "${{ matrix.susfs }}" = "" ]; then
-              scripts/config -d CONFIG_KSU_SUSFS
-          else
-            scripts/config -e KSU_SUSFS
-
+            scripts/config -d CONFIG_KSU_SUSFS || true
             if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
-              scripts/config -e KSU_SUSFS_SUS_PATH
-              scripts/config -e KSU_SUSFS_SUS_MOUNT
-              scripts/config -e KSU_SUSFS_SUS_KSTAT
-              scripts/config -e KSU_SUSFS_SPOOF_UNAME
-              scripts/config -d KSU_SUSFS_ENABLE_LOG
-              scripts/config -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
-              scripts/config -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
-              scripts/config -e KSU_SUSFS_OPEN_REDIRECT
-              scripts/config -e KSU_SUSFS_SUS_MAP
+              scripts/config -e CONFIG_KSU_SUSFS_SUS_PATH
+              scripts/config -e CONFIG_KSU_SUSFS_SUS_MOUNT
+              scripts/config -e CONFIG_KSU_SUSFS_SUS_KSTAT
+              scripts/config -e CONFIG_KSU_SUSFS_SPOOF_UNAME
+              scripts/config -d CONFIG_KSU_SUSFS_ENABLE_LOG
+              scripts/config -e CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+              scripts/config -e CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
+              scripts/config -e CONFIG_KSU_SUSFS_OPEN_REDIRECT
+              scripts/config -e CONFIG_KSU_SUSFS_SUS_MAP
             else
               scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
-            fi
-          fi  
+            fi 
+          fi
 
+          # resukisu extra
           if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
-              scripts/config -d KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
-              scripts/config -d KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
-              scripts/config -d KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
-              scripts/config -e CONFIG_KSU_MULTI_MANAGER_SUPPORT
-              # scripts/config -e CONFIG_KPM
-              scripts/config -e CONFIG_KSU_MANUAL_HOOK
+            scripts/config -d KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
+            scripts/config -d KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
+            scripts/config -d KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
+            scripts/config -e CONFIG_KSU_MULTI_MANAGER_SUPPORT
+            # scripts/config -e CONFIG_KPM
+            scripts/config -e CONFIG_KSU_MANUAL_HOOK
           fi
 
           make -j$(nproc)
 
-      - name: Package AnyKernel3
+      - name: Package
+        if: vars.POST_FILE == 'true'
         run: |
-          if [ "${{ vars.POST_FILE }}" = "true" ]; then
-            cd repo
-            git clone --depth=1 https://github.com/longuirom/AnyKernel3
-            cp arch/arm64/boot/Image AnyKernel3/
+          cd repo
+          git clone --depth=1 https://github.com/longuirom/AnyKernel3
 
-            OUT_NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}${{ inputs.prefix }}"
+          cp arch/arm64/boot/Image AnyKernel3/
 
-            cd AnyKernel3
-            zip -r "${OUT_NAME}.zip" ./*
-            cd ..
-            cp "AnyKernel3/${OUT_NAME}.zip" ./
+          NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}${{ inputs.prefix }}"
 
-            curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+          cd AnyKernel3
+          zip -r "$NAME.zip" ./*
+
+          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
             -F chat_id=${{ secrets.chat_id }} \
-            -F document=@${OUT_NAME}.zip -o response.json
+            -F document=@$NAME.zip -o response.json
 
-            curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
+          curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
             -H "Content-Type: application/json" \
             -d @response.json
-          fi
