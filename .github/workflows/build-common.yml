@@ -110,13 +110,16 @@ jobs:
 
           if [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
+          else
+            scripts/config -e CONFIG_KSU
           fi
 
           if [ "${{ matrix.susfs }}" = "" ]; then
               scripts/config -d CONFIG_KSU_SUSFS
           else
+            scripts/config -e KSU_SUSFS
+
             if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
-              scripts/config -e KSU_SUSFS
               scripts/config -e KSU_SUSFS_SUS_PATH
               scripts/config -e KSU_SUSFS_SUS_MOUNT
               scripts/config -e KSU_SUSFS_SUS_KSTAT
