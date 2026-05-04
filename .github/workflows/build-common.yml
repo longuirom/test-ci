@@ -84,7 +84,7 @@ jobs:
               git clone --depth=1 -b legacy https://github.com/longuirom/KernelSU-Next KernelSU
               ;;
             "_ksunV3__susfs")
-              git clone --depth=1 -b legacy_susfs https://github.com/longuirom/KernelSU-Next KernelSU
+              git clone --depth=1 -b legacy-susfs https://github.com/longuirom/KernelSU-Next KernelSU
               ;;
             "_resukisu_"|"_resukisu__susfs")
               git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
