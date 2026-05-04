@@ -42,7 +42,6 @@ jobs:
     name: "DEVICE=${{ matrix.device }} KSU=${{ matrix.ksu }} SUSFS=${{ matrix.susfs }} DEBUG=${{ matrix.debug }}"
     env:
       TARGET_REF: ${{ 
-          matrix.ksu == '_ksunV3' && matrix.susfs == 'true' && vars.BRANCH_KSUV3_SUSFS ||
           matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 ||
           matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU ||
           vars.release
