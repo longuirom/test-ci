@@ -38,6 +38,8 @@ jobs:
             debug: _permissive
           - susfs: _susfs
             debug: _permissive
+          - ksu: _resukisu
+            susfs: _susfs
 
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug
       }}"
