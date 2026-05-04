@@ -78,19 +78,25 @@ jobs:
           if [ "${{ matrix.ksu }}" = "_ksunV1" ]; then
             if [ "${{ matrix.susfs }}" = "" ]; then
               git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+              echo clone v1.1.1
             else
               git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
+              echo clone v1.1.1-susfs1.5.11
             fi
           elif [ "${{ matrix.ksu }}" = "_ksunV3" ]; then
             if [ "${{ matrix.susfs }}" = "" ]; then
               git clone --depth=1 -b legacy https://github.com/longuirom/KernelSU-Next KernelSU
+              echo clone legacy
             else
               git clone --depth=1 -b legacy_susfs https://github.com/longuirom/KernelSU-Next KernelSU
+              echo clone legacy_susfs
             fi
           elif [ "${{ matrix.ksu }}" = "_resukisu" ]; then
             git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
+            echo clone ReSukiSU
           else
             git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+            echo clone v1.1.1
           fi
 
           mkdir -p "$HOME/toolchains/neutron-clang"
