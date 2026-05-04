@@ -39,14 +39,12 @@ jobs:
           - susfs: _susfs
             debug: _permissive
 
-    name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}"
+    name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug
+      }}"
 
     env:
-      TARGET_REF: ${{ 
-          matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 ||
-          matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU ||
-          vars.release
-        }}
+      TARGET_REF: ${{ matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu ==
+        '_resukisu' && vars.BRANCH_RESUKISU || vars.release }}
 
     steps:
       - name: Checkout
@@ -122,7 +120,9 @@ jobs:
 
           # SUSFS (optional - nếu branch default rồi thì không cần)
           if [ "${{ matrix.susfs }}" = "" ]; then
-            scripts/config -d CONFIG_KSU_SUSFS || true
+            scripts/config -d CONFIG_KSU_SUSFS
+          else
+            scripts/config -e CONFIG_KSU_SUSFS
             if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
               scripts/config -e CONFIG_KSU_SUSFS_SUS_PATH
               scripts/config -e CONFIG_KSU_SUSFS_SUS_MOUNT
