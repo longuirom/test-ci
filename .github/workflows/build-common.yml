@@ -116,6 +116,7 @@ jobs:
 
           if [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
+            echo "da vao day"
           else
             scripts/config -e CONFIG_KSU
           fi
