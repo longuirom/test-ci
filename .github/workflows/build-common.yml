@@ -142,9 +142,9 @@ jobs:
 
           # resukisu extra
           if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
-            scripts/config -d KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
-            scripts/config -d KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
-            scripts/config -d KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
+            scripts/config -e KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
+            scripts/config -e KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
+            scripts/config -e KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
             scripts/config -e CONFIG_KSU_MULTI_MANAGER_SUPPORT
             # scripts/config -e CONFIG_KPM
             scripts/config -e CONFIG_KSU_MANUAL_HOOK
