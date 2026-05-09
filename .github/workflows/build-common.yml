@@ -46,7 +46,7 @@ jobs:
 
     env:
       TARGET_REF: ${{ matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu ==
-        '_resukisu' && vars.BRANCH_RESUKISU || vars.release }}
+        '_resukisu' && vars.BRANCH_RESUKISU || vars.BRANCH }}
 
     steps:
       - name: Checkout
