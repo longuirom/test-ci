@@ -1,4 +1,4 @@
-name: test-a51xx
+name: test-xcoverproxx
 
 on:
   workflow_dispatch:
