@@ -1,0 +1,17 @@
+name: test-a51xx
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-common.yml
+    with:
+      device: '[ "xcoverproxx" ]'
+      prefix: ""
+    secrets:
+      repo: ${{ secrets.REPO }}
+      ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_SAVE_FILE: ${{ secrets.TELEGRAM_SAVE_FILE }}
