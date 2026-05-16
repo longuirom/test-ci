@@ -7,7 +7,7 @@ jobs:
   build:
     uses: ./.github/workflows/build-common.yml
     with:
-      device: '[ "a51xx", "m31nsxx", "m31snsxx", "m21dd", "f41dd" ]'
+      device: '[ "a51xx", "m31nsxx", "m31snsxx", "m21dd", "f41dd", "xcoverproxx" ]'
       prefix: ""
     secrets:
       repo: ${{ secrets.REPO }}
