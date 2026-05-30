@@ -99,7 +99,7 @@ jobs:
           mkdir -p "$HOME/toolchains/neutron-clang"
           // cd "$HOME/toolchains/neutron-clang"
           // bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
-          curl -O https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/10032024/neutron-clang-10032024.tar.zst
+          wget https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/10032024/neutron-clang-10032024.tar.zst
           tar -xvf neutron-clang* -C $HOME/toolchains/neutron-clang
           echo "$HOME/toolchains/neutron-clang/bin" >> $GITHUB_PATH
 
