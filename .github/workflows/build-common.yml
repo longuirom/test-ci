@@ -38,7 +38,7 @@ jobs:
           - ksu: _ksuFork
             susfs: _susfs
 
-    name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}
+    name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
 
     env:
       TARGET_REF: ${{ matrix.ksu == '_ksuFork' && vars.BRANCH_KSU4 || matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu ==
