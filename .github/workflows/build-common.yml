@@ -40,14 +40,14 @@ jobs:
             debug: _permissive
           - ksu: _resukisu
             susfs: _susfs
-          - ksu: _ksuIdk
+          - ksu: _ksuFork
             susfs: _susfs
 
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug
       }}"
 
     env:
-      TARGET_REF: ${{ matrix.ksu == '_ksuIdk' && vars.BRANCH_KSU4 || matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu ==
+      TARGET_REF: ${{ matrix.ksu == '_ksuFork' && vars.BRANCH_KSU4 || matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu ==
         '_resukisu' && vars.BRANCH_RESUKISU || vars.BRANCH }}
 
     steps:
@@ -84,7 +84,7 @@ jobs:
             "_ksunV1__susfs")
               git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
               ;;
-            "_ksuIdk_")
+            "_ksuFork_")
               git clone --depth=1 https://github.com/longuirom/KernelSU KernelSU
               ;;
             "_ksunV3_")
