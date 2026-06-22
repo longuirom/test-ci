@@ -30,21 +30,15 @@ jobs:
         device: ${{ fromJson(inputs.device) }}
         ksu: ${{ fromJson(vars.ksu) }}
         susfs: [ _susfs, "" ]
-        debug: [ _permissive, "" ]
         exclude:
           - ksu: ""
             susfs: _susfs
-          - ksu: ""
-            debug: _permissive
-          - susfs: _susfs
-            debug: _permissive
           - ksu: _resukisu
             susfs: _susfs
           - ksu: _ksuFork
             susfs: _susfs
 
-    name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug
-      }}"
+    name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}
 
     env:
       TARGET_REF: ${{ matrix.ksu == '_ksuFork' && vars.BRANCH_KSU4 || matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu ==
@@ -115,11 +109,6 @@ jobs:
           # base config
           make exynos9610-${{ matrix.device }}_defconfig
 
-          # debug
-          if [ "${{ matrix.debug }}" = "_permissive" ]; then
-            scripts/config -e CONFIG_SECURITY_SELINUX_ALWAYS_PERMISSIVE
-          fi
-
           # KSU
           if [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
@@ -167,7 +156,7 @@ jobs:
 
           cp arch/arm64/boot/Image AnyKernel3/
 
-          NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ matrix.debug }}${{ inputs.prefix }}"
+          NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ inputs.prefix }}"
 
           cd AnyKernel3
           zip -r "$NAME.zip" ./*
