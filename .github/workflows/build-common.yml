@@ -157,6 +157,7 @@ jobs:
           cp arch/arm64/boot/Image AnyKernel3/
 
           NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ inputs.prefix }}"
+          echo "NAME=$NAME" >> $GITHUB_ENV
 
           cd AnyKernel3
           zip -r "$NAME.zip" ./*
@@ -168,3 +169,10 @@ jobs:
           curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
             -H "Content-Type: application/json" \
             -d @response.json
+
+        - name: Upload Artifact
+        if: vars.POST_FILE == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.NAME }}
+          path: repo/AnyKernel3/${{ env.NAME }}.zip
