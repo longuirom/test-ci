@@ -9,6 +9,7 @@ jobs:
     with:
       device: '[ "a51xx", "m31nsxx", "m31snsxx", "m21dd", "f41dd" ]'
       prefix: "_test"
+      ksu: ${{ vars.ksu }}
     secrets:
       repo: ${{ secrets.REPO }}
       ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}

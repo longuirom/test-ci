@@ -1,4 +1,4 @@
-name: release-xcoverproxx
+name: release_ksuFork
 
 on:
   workflow_dispatch:
@@ -7,8 +7,9 @@ jobs:
   build:
     uses: ./.github/workflows/build-common.yml
     with:
-      device: '[ "xcoverproxx" ]'
+      device: '[ "a51xx", "m31nsxx", "m31snsxx", "m21dd", "f41dd", "xcoverproxx" ]'
       prefix: ""
+      ksu: '[ "_ksuFork" ]'
     secrets:
       repo: ${{ secrets.REPO }}
       ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}

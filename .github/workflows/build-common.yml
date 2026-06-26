@@ -9,6 +9,9 @@ on:
       prefix:
         required: false
         type: string
+      ksu:
+        required: true
+        type: string
     secrets:
       repo:
         required: true
@@ -28,7 +31,7 @@ jobs:
     strategy:
       matrix:
         device: ${{ fromJson(inputs.device) }}
-        ksu: ${{ fromJson(vars.ksu) }}
+        ksu: ${{ fromJson(inputs.ksu) }}
         susfs: [ _susfs, "" ]
         exclude:
           - ksu: ""
@@ -170,7 +173,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d @response.json
 
-        - name: Upload Artifact
+      - name: Upload Artifact
         if: vars.POST_FILE == 'true'
         uses: actions/upload-artifact@v7
         with:

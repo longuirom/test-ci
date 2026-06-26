@@ -1,4 +1,4 @@
-name: test-a51xx
+name: release_reuskisu
 
 on:
   workflow_dispatch:
@@ -7,11 +7,12 @@ jobs:
   build:
     uses: ./.github/workflows/build-common.yml
     with:
-      device: '[ "a51xx" ]'
-      prefix: "_test"
+      device: '[ "a51xx", "m31nsxx", "m31snsxx", "m21dd", "f41dd", "xcoverproxx" ]'
+      prefix: ""
+      ksu: '[ "_resukisu" ]'
     secrets:
       repo: ${{ secrets.REPO }}
       ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
-      chat_id: ${{ secrets.TELEGRAM_CHAT_ID_TEST }}
+      chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_SAVE_FILE: ${{ secrets.TELEGRAM_SAVE_FILE }}
