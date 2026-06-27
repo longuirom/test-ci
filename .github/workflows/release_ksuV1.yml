@@ -9,7 +9,7 @@ jobs:
     with:
       device: '[ "a51xx", "m31nsxx", "m31snsxx", "m21dd", "f41dd", "xcoverproxx" ]'
       prefix: ""
-      ksu: '[ "_ksuV1" ]'
+      ksu: '[ "_ksunV1" ]'
     secrets:
       repo: ${{ secrets.REPO }}
       ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
