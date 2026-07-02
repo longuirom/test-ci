@@ -1,4 +1,4 @@
-name: test_ksuFork
+name: test_ksuFork_perf
 
 on:
   workflow_dispatch:
