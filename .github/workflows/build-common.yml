@@ -12,6 +12,9 @@ on:
       ksu:
         required: true
         type: string
+      perf:
+        required: false
+        type: boolean
     secrets:
       repo:
         required: true
@@ -110,7 +113,12 @@ jobs:
           cd repo
 
           # base config
-          make exynos9610-${{ matrix.device }}_defconfig
+          if [ "${{ inputs.perf }}" = "true" ]; then
+            scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ matrix.device }}_defconfig arch/arm64/configs/perf_defconfig >> /dev/zero
+            make oldconfig
+          else
+            make exynos9610-${{ matrix.device }}_defconfig
+          fi
 
           # KSU
           if [ "${{ matrix.ksu }}" = "" ]; then
@@ -158,8 +166,12 @@ jobs:
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
 
           cp arch/arm64/boot/Image AnyKernel3/
-
-          NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ inputs.prefix }}"
+          
+          if [ "${{ inputs.perf }}" = "true" ]; then
+            NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ inputs.prefix }}_perf"
+          else
+            NAME="LONG_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ inputs.prefix }}"
+          fi
           echo "NAME=$NAME" >> $GITHUB_ENV
 
           cd AnyKernel3
