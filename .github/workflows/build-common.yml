@@ -43,6 +43,10 @@ jobs:
             susfs: _susfs
           - ksu: _ksuFork
             susfs: _susfs
+          - ksu: _ksunV3
+            susfs: _susfs
+          - ksu: _ksunV1
+            susfs: _susfs
 
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
 
