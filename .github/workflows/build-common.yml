@@ -204,6 +204,7 @@ jobs:
             -d @payload.json
 
           rm $NEW_NAME
+          rm *.json
 
       - name: Upload Artifact
         if: vars.POST_FILE == 'true'
