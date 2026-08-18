@@ -29,7 +29,7 @@ on:
 
 jobs:
   prepare-toolchain:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       CLANG_VERSION: clang-r596125
     steps:
@@ -51,7 +51,7 @@ jobs:
 
   build:
     needs: prepare-toolchain
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     strategy:
       matrix:
@@ -86,13 +86,40 @@ jobs:
           path: repo
           fetch-depth: 1
 
+      - name: Install dependencies
+        run: |
+          set -e
+      
+          for i in {1..5}; do
+            echo "Attempt $i/5"
+      
+            if timeout 3m bash -c '
+              sudo DEBIAN_FRONTEND=noninteractive apt-get update &&
+              sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                bison \
+                flex \
+                libssl-dev \
+                python3 \
+                python-is-python3 \
+                libarchive-tools \
+                zstd \
+                make \
+                unzip \
+                zip
+            '; then
+              echo "Success"
+              exit 0
+            fi
+      
+            echo "Timed out. Retrying in 10 seconds..."
+            sleep 10
+          done
+      
+          echo "Failed after 5 attempts"
+          exit 1
+
       - name: Setup env
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            bison flex libssl-dev python3 python-is-python3 \
-            libarchive-tools zstd make unzip zip
-
           echo "ARCH=arm64" >> $GITHUB_ENV
           echo "LLVM=1" >> $GITHUB_ENV
           echo "KBUILD_BUILD_USER=Long" >> $GITHUB_ENV
