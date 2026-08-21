@@ -75,7 +75,7 @@ jobs:
 
     env:
       TARGET_REF: ${{ matrix.ksu == '_ksuFork' && vars.BRANCH_KSU4 || matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU || vars.BRANCH }}
-      CLANG_VERSION: clang-r596125
+      CLANG_VERSION: 10032024
 
     steps:
       - name: Checkout
