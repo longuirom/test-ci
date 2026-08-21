@@ -45,8 +45,8 @@ jobs:
         run: |
           mkdir -p ${{ github.workspace }}/toolchain
           curl -o clang.tar.gz -L --retry 5 --retry-delay 3 \
-            # https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main-kernel/${{ env.CLANG_VERSION }}.tar.gz
             https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/${{ env.CLANG_VERSION }}/neutron-clang-${{ env.CLANG_VERSION }}.tar.zst
+            # https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main-kernel/${{ env.CLANG_VERSION }}.tar.gz
           tar -xf clang.tar.gz -C ${{ github.workspace }}/toolchain
           rm clang.tar.gz
 
