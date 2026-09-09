@@ -74,7 +74,7 @@ jobs:
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
 
     env:
-      TARGET_REF: ${{ matrix.ksu == '_ksuFork' && vars.BRANCH_KSU4 || matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU || vars.BRANCH }}
+      TARGET_REF: ${{ matrix.ksu == '_ksuFork' && vars.BRANCH || matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU || vars.BRANCH }}
       CLANG_VERSION: 10032024
 
     steps:
@@ -219,6 +219,10 @@ jobs:
             scripts/config -e CONFIG_KSU_MULTI_MANAGER_SUPPORT
             # scripts/config -e CONFIG_KPM
             scripts/config -e CONFIG_KSU_MANUAL_HOOK
+          fi
+
+          if [ "${{ matrix.ksu }}" = "_ksuFork" ]; then
+            scripts/config -e KSU_TAMPER_SYSCALL_TABLE
           fi
 
           make -j$(nproc)
