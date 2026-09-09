@@ -90,6 +90,8 @@ jobs:
       - name: Install dependencies
         run: |
           set -e
+
+          sudo rm /etc/apt/sources.list.d/google-chrome.list
       
           for i in {1..5}; do
             echo "Attempt $i/5"
