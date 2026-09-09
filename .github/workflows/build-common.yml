@@ -91,7 +91,7 @@ jobs:
         run: |
           set -e
 
-          sudo rm /etc/apt/sources.list.d/google-chrome.list
+          grep -Ril "dl.google.com/linux/chrome" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null | xargs -r sudo rm
       
           for i in {1..5}; do
             echo "Attempt $i/5"
