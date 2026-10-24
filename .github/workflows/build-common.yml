@@ -235,6 +235,8 @@ jobs:
           cd repo
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
 
+          rm arch/arm64/boot/Image
+          mv arch/arm64/boot/Image-dtb arch/arm64/boot/Image
           cp arch/arm64/boot/Image AnyKernel3/
           
           if [ "${{ inputs.perf }}" = "true" ]; then
