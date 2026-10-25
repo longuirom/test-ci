@@ -12,6 +12,10 @@ on:
         required: true
       chat_id:
         required: true
+      branch_1:
+        required: true
+      branch_3:
+        required: true
 
 jobs:
   build:
@@ -20,6 +24,8 @@ jobs:
       device: ${{ inputs.device }}
       prefix: ${{ inputs.prefix }}
       ksu: ${{ inputs.ksu }}
+      branch_1: ${{ inputs.branch_1 }}
+      branch_3: ${{ inputs.branch_3 }}
     secrets:
       repo: ${{ secrets.REPO }}
       ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}

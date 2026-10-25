@@ -15,6 +15,12 @@ on:
       perf:
         required: false
         type: boolean
+      branch_1:
+        required: true
+        type: string
+      branch_3:
+        required: true
+        type: string
     secrets:
       repo:
         required: true
@@ -74,7 +80,7 @@ jobs:
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
 
     env:
-      TARGET_REF: ${{ matrix.ksu == '_ksuFork' && vars.BRANCH || matrix.ksu == '_ksunV3' && vars.BRANCH_KSUV3 || matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU || vars.BRANCH }}
+      TARGET_REF: ${{ matrix.ksu == '_ksuFork' && inputs.branch_1 || matrix.ksu == '_ksunV3' && inputs.branch_3 || matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU || inputs.branch_1 }}
       CLANG_VERSION: 10032024
 
     steps:
