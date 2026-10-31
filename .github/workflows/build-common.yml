@@ -341,8 +341,8 @@ jobs:
           mkdir -p "$TMP_NOMOUNT"
           unzip -o "$SRC_ZIP" -d "$TMP_NOMOUNT"
 
-          mkdir -p "$TMP_NOMOUNT/lkm"
-          rm -f "$TMP_NOMOUNT"/lkm/*
+          # mkdir -p "$TMP_NOMOUNT/lkm"
+          # rm -f "$TMP_NOMOUNT"/lkm/*
           cp fs/nomount/nomount.ko "$TMP_NOMOUNT/lkm/nomount-4.14.ko"
 
           (cd "$TMP_NOMOUNT" && zip -r "../${NEW_NAME}.zip" .)
