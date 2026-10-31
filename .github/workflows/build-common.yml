@@ -1,0 +1,359 @@
+name: Build Common
+
+on:
+  workflow_call:
+    inputs:
+      device:
+        required: true
+        type: string
+      prefix:
+        required: false
+        type: string
+      ksu:
+        required: true
+        type: string
+      perf:
+        required: false
+        type: boolean
+      branch_1:
+        required: true
+        type: string
+      branch_3:
+        required: true
+        type: string
+    secrets:
+      repo:
+        required: true
+      ssh_key:
+        required: true
+      chat_id:
+        required: true
+      TELEGRAM_BOT_TOKEN:
+        required: true
+      TELEGRAM_SAVE_FILE:
+        required: true
+
+jobs:
+  prepare-toolchain:
+    runs-on: ubuntu-24.04
+    env:
+      CLANG_VERSION: 10032024
+    steps:
+      - name: Cache Clang toolchain
+        id: cache-clang
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/toolchain
+          key: ${{ env.CLANG_VERSION }}-${{ runner.os }}
+
+      - name: Download Clang toolchain
+        if: steps.cache-clang.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ${{ github.workspace }}/toolchain
+          curl -o clang.tar.gz -L --retry 5 --retry-delay 3 \
+            https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/${{ env.CLANG_VERSION }}/neutron-clang-${{ env.CLANG_VERSION }}.tar.zst
+            # https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main-kernel/${{ env.CLANG_VERSION }}.tar.gz
+          tar -xf clang.tar.gz -C ${{ github.workspace }}/toolchain
+          rm clang.tar.gz
+
+  build:
+    needs: prepare-toolchain
+    runs-on: ubuntu-24.04
+
+    strategy:
+      matrix:
+        device: ${{ fromJson(inputs.device) }}
+        ksu: ${{ fromJson(inputs.ksu) }}
+        susfs: [ _susfs, "" ]
+        exclude:
+          - ksu: ""
+            susfs: _susfs
+          - ksu: _resukisu
+            susfs: _susfs
+          - ksu: _ksuFork
+            susfs: _susfs
+          - ksu: _ksunV3
+            susfs: ""
+          - ksu: _ksunV1
+            susfs: ""
+
+    name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
+
+    env:
+      TARGET_REF: ${{ matrix.ksu == '_ksuFork' && inputs.branch_1 || matrix.ksu == '_ksunV3' && inputs.branch_3 || matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU || inputs.branch_1 }}
+      CLANG_VERSION: 10032024
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ secrets.repo }}
+          ref: ${{ env.TARGET_REF }}
+          ssh-key: ${{ secrets.ssh_key }}
+          path: repo
+          fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          set -e
+
+          grep -Ril "dl.google.com/linux/chrome" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null | xargs -r sudo rm
+      
+          for i in {1..5}; do
+            echo "Attempt $i/5"
+      
+            if timeout 3m bash -c '
+              sudo DEBIAN_FRONTEND=noninteractive apt-get update &&
+              sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                bison \
+                flex \
+                libssl-dev \
+                python3 \
+                python-is-python3 \
+                libarchive-tools \
+                zstd \
+                make \
+                unzip \
+                zip
+            '; then
+              echo "Success"
+              exit 0
+            fi
+      
+            echo "Timed out. Retrying in 10 seconds..."
+            sleep 10
+          done
+      
+          echo "Failed after 5 attempts"
+          exit 1
+
+      - name: Setup env
+        run: |
+          echo "ARCH=arm64" >> $GITHUB_ENV
+          echo "LLVM=1" >> $GITHUB_ENV
+          echo "KBUILD_BUILD_USER=Long" >> $GITHUB_ENV
+          echo "PLATFORM_VERSION=12" >> $GITHUB_ENV
+          echo "ANDROID_MAJOR_VERSION=s" >> $GITHUB_ENV
+          echo "TIME=$(date +%y%m%d)" >> $GITHUB_ENV
+
+      - name: Restore Clang toolchain
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ github.workspace }}/toolchain
+          key: ${{ env.CLANG_VERSION }}-${{ runner.os }}
+
+      - name: Setup Clang
+        run: |
+          TOOLCHAIN_BIN="$GITHUB_WORKSPACE/toolchain/bin"
+          echo "$TOOLCHAIN_BIN" >> $GITHUB_PATH
+
+      - name: Verify Clang
+        run: |
+          which clang
+          clang --version
+
+      - name: Setup KernelSU
+        run: |
+          cd repo
+
+          case "${{ matrix.ksu }}_${{ matrix.susfs }}" in
+            "_ksunV1_")
+              git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+              ;;
+            "_ksunV1__susfs")
+              git clone --depth=1 -b v1.1.1-susfs1.5.11 https://github.com/longuirom/KernelSU-Next KernelSU
+              ;;
+            "_ksuFork_")
+              git clone --depth=1 -b fork https://github.com/longuirom/KernelSU KernelSU
+              ;;
+            "_ksunV3_")
+              git clone --depth=1 -b legacy https://github.com/longuirom/KernelSU-Next KernelSU
+              ;;
+            "_ksunV3__susfs")
+              git clone --depth=1 -b legacy-susfs-v2 https://github.com/longuirom/KernelSU-Next KernelSU
+              ;;
+            "_resukisu_"|"_resukisu__susfs")
+              git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
+              ;;
+            *)
+              git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+              ;;
+          esac
+
+      - name: Build kernel
+        run: |
+          cd repo
+
+          # base config
+          if [ "${{ inputs.perf }}" = "true" ]; then
+            scripts/kconfig/merge_config.sh arch/arm64/configs/exynos9610-${{ matrix.device }}_defconfig arch/arm64/configs/perf_defconfig >> /dev/zero
+            make oldconfig
+          else
+            make exynos9610-${{ matrix.device }}_defconfig
+          fi
+
+          # KSU
+          if [ "${{ matrix.ksu }}" = "" ]; then
+            scripts/config -d CONFIG_KSU
+          else
+            scripts/config -e CONFIG_KSU
+          fi
+
+          # SUSFS (optional - nếu branch default rồi thì không cần)
+          if [ "${{ matrix.susfs }}" = "" ]; then
+            scripts/config -d CONFIG_KSU_SUSFS
+          else
+            scripts/config -e CONFIG_KSU_SUSFS
+            if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
+              scripts/config -e CONFIG_KSU_SUSFS_SUS_PATH
+              scripts/config -e CONFIG_KSU_SUSFS_SUS_MOUNT
+              scripts/config -e CONFIG_KSU_SUSFS_SUS_KSTAT
+              scripts/config -e CONFIG_KSU_SUSFS_SPOOF_UNAME
+              scripts/config -d CONFIG_KSU_SUSFS_ENABLE_LOG
+              scripts/config -e CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+              scripts/config -e CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
+              scripts/config -e CONFIG_KSU_SUSFS_OPEN_REDIRECT
+              scripts/config -e CONFIG_KSU_SUSFS_SUS_MAP
+            else
+              scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
+            fi 
+          fi
+
+          # resukisu extra
+          if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
+            scripts/config -e KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
+            scripts/config -e KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
+            scripts/config -e KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
+            scripts/config -e CONFIG_KSU_MULTI_MANAGER_SUPPORT
+            # scripts/config -e CONFIG_KPM
+            scripts/config -e CONFIG_KSU_MANUAL_HOOK
+          fi
+
+          if [ "${{ matrix.ksu }}" = "_ksuFork" ]; then
+            scripts/config -e KSU_TAMPER_SYSCALL_TABLE
+          fi
+          
+          scripts/config --set-str CONFIG_LOCALVERSION "-LongPlus-${{ matrix.device }}"
+
+          make -j$(nproc)
+
+      - name: Package
+        if: vars.POST_FILE == 'true'
+        run: |
+          cd repo
+          git clone --depth=1 https://github.com/longuirom/AnyKernel3
+
+          rm arch/arm64/boot/Image
+          mv arch/arm64/boot/Image-dtb arch/arm64/boot/Image
+          cp arch/arm64/boot/Image AnyKernel3/
+          
+          if [ "${{ inputs.perf }}" = "true" ]; then
+            NAME="LongPlus_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ inputs.prefix }}_perf"
+          else
+            NAME="LongPlus_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ inputs.prefix }}"
+          fi
+          echo "NAME=$NAME" >> $GITHUB_ENV
+
+          cd AnyKernel3
+          zip -r "$NAME.zip" ./*
+
+          SHA256=$(sha256sum "$NAME.zip" | awk '{print $1}')
+          SHORT_SHA=${SHA256:0:8}
+
+          NEW_NAME="${NAME}-${SHORT_SHA}.zip"
+          mv "$NAME.zip" "$NEW_NAME"
+
+          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+            -F chat_id=${{ secrets.chat_id }} \
+            -F document=@$NEW_NAME -o response.json
+
+          cat > payload.json <<EOF
+          {
+            "response": $(cat response.json),
+            "sha256": "$SHA256"
+          }
+          EOF
+
+          curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
+            -H "Content-Type: application/json" \
+            -d @payload.json
+
+          rm $NEW_NAME
+          rm *.json
+
+      - name: Upload Artifact
+        if: vars.POST_FILE == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.NAME }}
+          path: repo/AnyKernel3
+
+      - name: Build NoMount LKM
+        if: matrix.device == 'a51xx' && matrix.ksu == '_ksuFork'
+        working-directory: repo
+        run: |
+          set -eu
+
+          NOMOUNT_REPO="maxsteeel/nomount"
+          API="https://api.github.com/repos/$NOMOUNT_REPO/releases/latest"
+
+          echo "Fetching latest release from $NOMOUNT_REPO..."
+          JSON=$(curl -fsSL -H "Accept: application/vnd.github+json" "$API")
+
+          URLS=$(printf '%s\n' "$JSON" |
+            grep -oE '"browser_download_url":[[:space:]]*"[^"]+\.zip"' |
+            sed -E 's/.*"([^"]+\.zip)"/\1/')
+
+          if [ -z "$URLS" ]; then
+            echo "No ZIP assets found in latest release!"
+            exit 1
+          fi
+
+          printf '%s\n' "$URLS" | while IFS= read -r url; do
+            echo "Downloading: $url"
+            curl -fL -O "$url" < /dev/null
+          done
+
+          # setup LKM source
+          curl -fsSL https://raw.githubusercontent.com/maxsteeel/nomount/refs/heads/dev/kernel/setup.sh | bash -
+
+          mkdir -p fs/nomount
+          # cp NoMount/kernel/src/* fs/nomount/
+
+          # build module
+          CONFIG_NOMOUNT=m make M="$(pwd)/fs/nomount" modules
+
+          # repack
+          TMP_NOMOUNT="tmpNoMount"
+          SRC_ZIP=$(ls NoMount*.zip | head -n 1)
+          NEW_NAME="$(basename "$SRC_ZIP" .zip)_LongKernel"
+
+          rm -rf "$TMP_NOMOUNT"
+          mkdir -p "$TMP_NOMOUNT"
+          unzip -o "$SRC_ZIP" -d "$TMP_NOMOUNT"
+
+          mkdir -p "$TMP_NOMOUNT/lkm"
+          rm -f "$TMP_NOMOUNT"/lkm/*
+          cp fs/nomount/nomount.ko "$TMP_NOMOUNT/lkm/nomount-4.14.ko"
+
+          (cd "$TMP_NOMOUNT" && zip -r "../${NEW_NAME}.zip" .)
+          rm -rf "$TMP_NOMOUNT"
+
+          ZIP_FILE="${NEW_NAME}.zip"
+          [ -f "$ZIP_FILE" ] || { echo "NoMount ZIP not found!"; exit 1; }
+
+          curl -fsS -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+            -F "chat_id=${{ secrets.chat_id }}" \
+            -F "document=@${ZIP_FILE}" -o response.json
+
+          cat > payload.json <<EOF
+          {
+            "response": $(cat response.json),
+            "sha256": ""
+          }
+          EOF
+
+          curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
+            -H "Content-Type: application/json" \
+            -d @payload.json
