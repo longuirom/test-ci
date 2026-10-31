@@ -294,25 +294,34 @@ jobs:
         run: |
           set -eu
 
-          NOMOUNT_REPO="maxsteeel/nomount"
-          API="https://api.github.com/repos/$NOMOUNT_REPO/releases/latest"
+          REPO="maxsteeel/nomount"
 
-          echo "Fetching latest release from $NOMOUNT_REPO..."
-          JSON=$(curl -fsSL -H "Accept: application/vnd.github+json" "$API")
+          TAG_URL=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+            "https://github.com/$REPO/releases/latest")
+          TAG="${TAG_URL##*/}"
 
-          URLS=$(printf '%s\n' "$JSON" |
-            grep -oE '"browser_download_url":[[:space:]]*"[^"]+\.zip"' |
-            sed -E 's/.*"([^"]+\.zip)"/\1/')
+          URLS=$(curl -fsSL "https://github.com/$REPO/releases/expanded_assets/$TAG" |
+            grep -oE 'href="[^"]+\.zip"' |
+            sed -E 's/href="([^"]+)"/\1/' |
+            grep '/releases/download/' |
+            sed 's|^/|https://github.com/|' |
+            sort -u)
 
           if [ -z "$URLS" ]; then
             echo "No ZIP assets found in latest release!"
             exit 1
           fi
 
-          printf '%s\n' "$URLS" | while IFS= read -r url; do
-            echo "Downloading: $url"
-            curl -fL -O "$url" < /dev/null
-          done
+          URL=$(printf '%s\n' "$URLS" | head -n 1)
+
+          FILE_NAME=$(basename "${URL%%\?*}")
+          case "$FILE_NAME" in
+            *.zip) ;;
+            *) FILE_NAME="NoMount.zip" ;;
+          esac
+
+          echo "Downloading NoMount zip..."
+          curl -fL --retry 3 -o "$FILE_NAME" "$URL"
 
           # setup LKM source
           curl -fsSL https://raw.githubusercontent.com/maxsteeel/nomount/refs/heads/dev/kernel/setup.sh | bash -
