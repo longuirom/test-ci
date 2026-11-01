@@ -66,6 +66,7 @@ jobs:
         ksu: ${{ fromJson(inputs.ksu) }}
         susfs: [ _susfs, "" ]
         exclude:
+          - ksu: _nonroot
           - ksu: ""
             susfs: _susfs
           - ksu: _resukisu
@@ -193,7 +194,9 @@ jobs:
           fi
 
           # KSU
-          if [ "${{ matrix.ksu }}" = "" ]; then
+          if [ "${{ matrix.ksu }}" = "_ksuFork" ]; then
+            scripts/config --module KSU
+          elif [ "${{ matrix.ksu }}" = "" ]; then
             scripts/config -d CONFIG_KSU
           else
             scripts/config -e CONFIG_KSU
@@ -255,31 +258,42 @@ jobs:
           echo "NAME=$NAME" >> $GITHUB_ENV
 
           cd AnyKernel3
-          zip -r "$NAME.zip" ./*
+          if [ "${{ matrix.ksu }}" = "_ksuFork" ]; then
+            NONROOT_NAME="${NAME/_ksuFork/_nonroot}"
+            zip -r "$NONROOT_NAME.zip" ./*
 
-          SHA256=$(sha256sum "$NAME.zip" | awk '{print $1}')
-          SHORT_SHA=${SHA256:0:8}
+            MODULES_DIR="$PWD/modules"
+            mkdir -p "$MODULES_DIR"
+            cp -f ../KernelSU/kernel/ksu.ko "$MODULES_DIR/kernelsu.ko"
+            zip -r "$NAME.zip" ./* -x '*.zip'
+            PACKAGES="$NONROOT_NAME.zip $NAME.zip"
+          else
+            zip -r "$NAME.zip" ./*
+            PACKAGES="$NAME.zip"
+          fi
 
-          NEW_NAME="${NAME}-${SHORT_SHA}.zip"
-          mv "$NAME.zip" "$NEW_NAME"
+          for PACKAGE in $PACKAGES; do
+            SHA256=$(sha256sum "$PACKAGE" | awk '{print $1}')
+            SHORT_SHA=${SHA256:0:8}
+            NEW_NAME="${PACKAGE%.zip}-${SHORT_SHA}.zip"
+            mv "$PACKAGE" "$NEW_NAME"
 
-          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id=${{ secrets.chat_id }} \
-            -F document=@$NEW_NAME -o response.json
+            curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+              -F chat_id=${{ secrets.chat_id }} \
+              -F document=@"$NEW_NAME" -o response.json
 
-          cat > payload.json <<EOF
+            cat > payload.json <<EOF
           {
             "response": $(cat response.json),
             "sha256": "$SHA256"
           }
           EOF
 
-          curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
-            -H "Content-Type: application/json" \
-            -d @payload.json
-
-          rm $NEW_NAME
-          rm *.json
+            curl -X POST "${{ secrets.TELEGRAM_SAVE_FILE }}" \
+              -H "Content-Type: application/json" \
+              -d @payload.json
+            rm "$NEW_NAME" response.json payload.json
+          done
 
       - name: Upload Artifact
         if: vars.POST_FILE == 'true'
