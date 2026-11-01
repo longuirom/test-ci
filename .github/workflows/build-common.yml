@@ -259,10 +259,10 @@ jobs:
 
           cd AnyKernel3
           if [ "${{ matrix.ksu }}" = "_ksuFork" ]; then
-            NONROOT_NAME="${NAME/_ksuFork/_nonroot}"
+            NONROOT_NAME="${NAME/_ksuFork/''}"
             zip -r "$NONROOT_NAME.zip" ./*
 
-            MODULES_DIR="$PWD/modules"
+            MODULES_DIR="$PWD/modules/system/lib/modules"
             mkdir -p "$MODULES_DIR"
             cp -f ../KernelSU/kernel/ksu.ko "$MODULES_DIR/kernelsu.ko"
             zip -r "$NAME.zip" ./* -x '*.zip'
