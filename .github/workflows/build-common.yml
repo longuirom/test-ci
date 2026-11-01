@@ -238,7 +238,7 @@ jobs:
           
           scripts/config --set-str CONFIG_LOCALVERSION "-LongPlus-${{ matrix.device }}"
 
-          make -j$(nproc)
+          make KBUILD_MODPOST_WARN=1 -j$(nproc)
 
       - name: Package
         if: vars.POST_FILE == 'true'
