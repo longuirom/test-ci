@@ -85,6 +85,10 @@ jobs:
       CLANG_VERSION: 10032024
 
     steps:
+      - name: Set timezone
+        run: |
+          sudo timedatectl set-timezone Asia/Ho_Chi_Minh
+          date
       - name: Checkout
         uses: actions/checkout@v6
         with:
