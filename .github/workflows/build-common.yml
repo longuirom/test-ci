@@ -236,6 +236,7 @@ jobs:
 
           if [ "${{ matrix.ksu }}" = "_ksuFork" ]; then
             scripts/config -e KSU_TAMPER_SYSCALL_TABLE
+            scripts/config -d KSU_DISABLE_32BIT_HOOKS
           fi
           
           scripts/config --set-str CONFIG_LOCALVERSION "-LongPlus-${{ matrix.device }}"
