@@ -130,7 +130,12 @@ jobs:
           which clang
           clang --version
 
-      - name: Build kernel
+      - name: Setup KernelSU
+        run: |
+          cd repo
+          git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
+
+      - name: Modules prepare
         working-directory: repo
         run: |
           set -euo pipefail
