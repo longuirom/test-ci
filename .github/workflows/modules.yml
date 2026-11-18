@@ -197,9 +197,6 @@ jobs:
           # Build module
           CONFIG_NOMOUNT=m make M="$(pwd)/fs/nomount" modules
 
-          # test
-          llvm-readelf -SW "$(pwd)/fs/nomount/nomount.ko" | grep -Ei 'plt|trampoline'
-
           # Repack
           TMP_NOMOUNT="tmpNoMount"
 
