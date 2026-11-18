@@ -143,6 +143,8 @@ jobs:
           make exynos9610-m21dd_defconfig
 
           scripts/config --set-str CONFIG_LOCALVERSION "-LongPlus-${{ matrix.device }}"
+          scripts/config -e CONFIG_MODULES
+          scripts/config -e CONFIG_ARM64_MODULE_PLTS
 
           make modules_prepare
 
@@ -194,6 +196,9 @@ jobs:
 
           # Build module
           CONFIG_NOMOUNT=m make M="$(pwd)/fs/nomount" modules
+
+          # test
+          llvm-readelf -SW fs/nomount/nomount.ko | grep -Ei 'plt|trampoline'
 
           # Repack
           TMP_NOMOUNT="tmpNoMount"
