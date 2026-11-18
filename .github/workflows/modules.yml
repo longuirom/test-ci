@@ -262,7 +262,7 @@ jobs:
           }
           EOF
 
-          curl -fsS -X POST "${{ env.SAVE_FILE }}" \
+          curl -X POST "${{ env.SAVE_FILE }}" \
             -H "Content-Type: application/json" \
             -d @payload.json
 
