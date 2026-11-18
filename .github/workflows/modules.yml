@@ -145,6 +145,7 @@ jobs:
           scripts/config --set-str CONFIG_LOCALVERSION "-LongPlus-${{ matrix.device }}"
           scripts/config -e CONFIG_MODULES
           scripts/config -e CONFIG_ARM64_MODULE_PLTS
+          make olddefconfig
 
           make modules_prepare
 
