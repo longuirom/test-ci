@@ -255,13 +255,12 @@ jobs:
             -F "document=@${ZIP_FILE}" \
             -o response.json
 
-          jq -n \
-            --slurpfile response response.json \
-            --arg sha256 "$(sha256sum "$ZIP_FILE" | awk '{print $1}')" \
-            '{
-              response: $response[0],
-              sha256: $sha256
-            }' > payload.json
+          cat > payload.json <<EOF
+          {
+            "response": $(cat response.json),
+            "sha256": ""
+          }
+          EOF
 
           curl -fsS -X POST "${{ env.SAVE_FILE }}" \
             -H "Content-Type: application/json" \
