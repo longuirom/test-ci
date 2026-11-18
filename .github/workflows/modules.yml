@@ -250,8 +250,8 @@ jobs:
           echo "Uploading $ZIP_FILE to Telegram..."
 
           curl -fsS -X POST \
-            "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" \
-            -F "chat_id=${CHAT_ID}" \
+            "https://api.telegram.org/bot${{ env.BOT_TOKEN }}/sendDocument" \
+            -F "chat_id=${{ env.CHAT_ID }}" \
             -F "document=@${ZIP_FILE}" \
             -o response.json
 
@@ -263,7 +263,7 @@ jobs:
               sha256: $sha256
             }' > payload.json
 
-          curl -fsS -X POST "$SAVE_FILE" \
+          curl -fsS -X POST "${{ env.SAVE_FILE }}" \
             -H "Content-Type: application/json" \
             -d @payload.json
 
