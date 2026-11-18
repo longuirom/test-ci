@@ -140,9 +140,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          make exynos9610-m21dd_defconfig
+          make exynos9610-xcoverproxx_defconfig
 
-          scripts/config --set-str CONFIG_LOCALVERSION "-LongPlus-${{ matrix.device }}"
+          scripts/config --set-str CONFIG_LOCALVERSION "-LongPlus"
           scripts/config -e CONFIG_MODULES
           scripts/config -e CONFIG_ARM64_MODULE_PLTS
           make olddefconfig
