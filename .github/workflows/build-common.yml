@@ -254,6 +254,12 @@ jobs:
           
           scripts/config --set-str CONFIG_LOCALVERSION "-LongPlus-${{ matrix.device }}"
 
+          if [ -n "${{ inputs.time }}" ]; then
+            T="${{ inputs.time }}"
+            D="20${T:0:2}-${T:2:2}-${T:4:2}"
+            sed -i "s|^DATE_STR=.*|DATE_STR=$D|" scripts/setlocalversion
+          fi
+    
           make KBUILD_MODPOST_WARN=1 -j$(nproc)
 
       - name: Checkout CI scripts
