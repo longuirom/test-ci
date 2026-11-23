@@ -80,7 +80,7 @@ jobs:
           susfs: ""
         - ksu: _ksunV1
           susfs: ""
-        - ksu: bakasu
+        - ksu: _bakasu
           susfs: ""
 
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
