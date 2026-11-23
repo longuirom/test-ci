@@ -81,7 +81,7 @@ jobs:
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
 
     env:
-      TARGET_REF: ${{ matrix.ksu == '_ksuFork' && inputs.branch_1 || matrix.ksu == '_ksunV3' && inputs.branch_3 || matrix.ksu == '_resukisu' && vars.BRANCH_RESUKISU || inputs.branch_1 }}
+      TARGET_REF: ${{ matrix.ksu == '_ksuFork' && inputs.branch_1 || matrix.ksu == '_ksunV3' && inputs.branch_3 || matrix.ksu == '_bakasu' && 'release-bakasu' || inputs.branch_1 }}
       CLANG_VERSION: 10032024
 
     steps:
@@ -177,8 +177,8 @@ jobs:
             "_ksunV3__susfs")
               git clone --depth=1 -b legacy-susfs-v2 https://github.com/longuirom/KernelSU-Next KernelSU
               ;;
-            "_resukisu_"|"_resukisu__susfs")
-              git clone --depth=1 https://github.com/longuirom/ReSukiSU KernelSU
+            "_bakasu_"|"_bakasu__susfs")
+              git clone --depth=1 https://github.com/longuirom/BakaSU KernelSU
               ;;
             *)
               git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
@@ -209,7 +209,7 @@ jobs:
             scripts/config -d CONFIG_KSU_SUSFS
           else
             scripts/config -e CONFIG_KSU_SUSFS
-            if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
+            if [ "${{ matrix.ksu }}" = "_bakasu" ]; then
               scripts/config -e CONFIG_KSU_SUSFS_SUS_PATH
               scripts/config -e CONFIG_KSU_SUSFS_SUS_MOUNT
               scripts/config -e CONFIG_KSU_SUSFS_SUS_KSTAT
@@ -224,8 +224,8 @@ jobs:
             fi 
           fi
 
-          # resukisu extra
-          if [ "${{ matrix.ksu }}" = "_resukisu" ]; then
+          # bakasu extra
+          if [ "${{ matrix.ksu }}" = "_bakasu" ]; then
             scripts/config -e KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
             scripts/config -e KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
             scripts/config -e KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
