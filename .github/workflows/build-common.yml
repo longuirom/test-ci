@@ -21,6 +21,9 @@ on:
       branch_3:
         required: true
         type: string
+      time:
+        required: false
+        type: string
     secrets:
       repo:
         required: true
@@ -139,7 +142,8 @@ jobs:
           echo "KBUILD_BUILD_USER=Long" >> $GITHUB_ENV
           echo "PLATFORM_VERSION=12" >> $GITHUB_ENV
           echo "ANDROID_MAJOR_VERSION=s" >> $GITHUB_ENV
-          echo "TIME=$(date +%y%m%d)" >> $GITHUB_ENV
+          echo "TIME=${{ inputs.time || '' }}" >> $GITHUB_ENV
+          if [ -z "$TIME" ]; then echo "TIME=$(date +%y%m%d)" >> $GITHUB_ENV; fi
 
       - name: Restore Clang toolchain
         uses: actions/cache/restore@v6
