@@ -232,6 +232,7 @@ jobs:
             scripts/config -e CONFIG_KSU_MULTI_MANAGER_SUPPORT
             # scripts/config -e CONFIG_KPM
             scripts/config -e CONFIG_KSU_MANUAL_HOOK
+            scripts/config -d CONFIG_KSU_TRACEPOINT_HOOK
           fi
 
           if [ "${{ matrix.ksu }}" = "_ksuFork" ]; then
