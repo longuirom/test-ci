@@ -243,36 +243,98 @@ jobs:
 
           make KBUILD_MODPOST_WARN=1 -j$(nproc)
 
+      - name: Checkout CI scripts
+        uses: actions/checkout@v6
+        with:
+          path: ci
+
+      - name: Patch FolkPatch
+        if: matrix.ksu == '' && vars.POST_FILE == 'true'
+        working-directory: repo
+        env:
+          KERNEL_IMAGE: ${{ github.workspace }}/repo/arch/arm64/boot/Image-dtb
+          OUTPUT_IMAGE: ${{ github.workspace }}/repo/arch/arm64/boot/Image-dtb-folkpatch
+          WORK_DIR: ${{ runner.temp }}/folkpatch
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$WORK_DIR"
+
+          echo "Patching nonroot kernel with FolkPatch..."
+
+          bash "$GITHUB_WORKSPACE/ci/scripts/folkpatch.sh"
+
+          if [ ! -s "$OUTPUT_IMAGE" ]; then
+            echo "FolkPatch output not found!"
+            exit 1
+          fi
+
+          echo "FolkPatch completed:"
+          ls -lh "$KERNEL_IMAGE" "$OUTPUT_IMAGE"
+
       - name: Package
         if: vars.POST_FILE == 'true'
+        working-directory: repo
+        env:
+          KERNEL_IMAGE: ${{ github.workspace }}/repo/arch/arm64/boot/Image-dtb
+          FOLKPATCH_IMAGE: ${{ github.workspace }}/repo/arch/arm64/boot/Image-dtb-folkpatch
         run: |
-          cd repo
+          set -euo pipefail
+
           git clone --depth=1 https://github.com/longuirom/AnyKernel3
 
-          rm arch/arm64/boot/Image
-          mv arch/arm64/boot/Image-dtb arch/arm64/boot/Image
-          cp arch/arm64/boot/Image AnyKernel3/
-          
+          AK3="$GITHUB_WORKSPACE/repo/AnyKernel3"
+
           if [ "${{ inputs.perf }}" = "true" ]; then
             NAME="LongPlus_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ inputs.prefix }}_perf"
           else
             NAME="LongPlus_${{ matrix.device }}_${{ env.TIME }}${{ matrix.ksu }}${{ matrix.susfs }}${{ inputs.prefix }}"
           fi
-          echo "NAME=$NAME" >> $GITHUB_ENV
 
-          cd AnyKernel3
-          zip -r "$NAME.zip" ./*
-          PACKAGES="$NAME.zip"
+          echo "NAME=$NAME" >> "$GITHUB_ENV"
 
-          for PACKAGE in $PACKAGES; do
+          # Package nonroot
+          cp "$KERNEL_IMAGE" "$AK3/Image"
+
+          (
+            cd "$AK3"
+            zip -r "$NAME.zip" ./* -x '*.zip'
+          )
+
+          PACKAGES=("$AK3/$NAME.zip")
+
+          # Package FolkPatch variant
+          if [ "${{ matrix.ksu }}" = "" ]; then
+            if [ ! -s "$FOLKPATCH_IMAGE" ]; then
+              echo "FolkPatch image missing!"
+              exit 1
+            fi
+
+            cp "$FOLKPATCH_IMAGE" "$AK3/Image"
+
+            FOLKPATCH_NAME="${NAME}_FolkPatch"
+
+            (
+              cd "$AK3"
+              zip -r "$FOLKPATCH_NAME.zip" ./* -x '*.zip'
+            )
+
+            PACKAGES+=("$AK3/$FOLKPATCH_NAME.zip")
+          fi
+
+          # Upload packages to Telegram
+          for PACKAGE in "${PACKAGES[@]}"; do
             SHA256=$(sha256sum "$PACKAGE" | awk '{print $1}')
             SHORT_SHA=${SHA256:0:8}
-            NEW_NAME="${PACKAGE%.zip}-${SHORT_SHA}.zip"
-            mv "$PACKAGE" "$NEW_NAME"
 
-            curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-              -F chat_id=${{ secrets.chat_id }} \
-              -F document=@"$NEW_NAME" -o response.json
+            NEW_NAME="${PACKAGE%.zip}-${SHORT_SHA}.zip"
+            cp "$PACKAGE" "$NEW_NAME"
+
+            curl -X POST \
+              "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+              -F "chat_id=${{ secrets.chat_id }}" \
+              -F "document=@${NEW_NAME}" \
+              -o response.json
 
             cat > payload.json <<EOF
           {
