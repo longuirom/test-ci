@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-REPO="bmax121/KernelPatch"
+REPO="longuirom/KernelPatch"
 
 TAG_URL=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
   "https://github.com/$REPO/releases/latest")
