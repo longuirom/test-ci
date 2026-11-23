@@ -49,4 +49,4 @@ ls -lh kpimg-android kptools-linux
 chmod +x ./kpimg-android
 chmod +x ./kptools-linux
 
-./kptools-linux -p --image $KERNEL_IMAGE --skey "longkernel-ahihi-dongoc" --kpimg kpimg-android --out $OUTPUT_IMAGE
+./kptools-linux -p --image $KERNEL_IMAGE --kpimg kpimg-android --out $OUTPUT_IMAGE
