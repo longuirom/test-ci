@@ -69,17 +69,19 @@ jobs:
         ksu: ${{ fromJson(inputs.ksu) }}
         susfs: [ _susfs, "" ]
         exclude:
-          - ksu: _nonroot
-          - ksu: ""
-            susfs: _susfs
-          - ksu: _kabasu
-            susfs: _susfs
-          - ksu: _ksuFork
-            susfs: _susfs
-          - ksu: _ksunV3
-            susfs: ""
-          - ksu: _ksunV1
-            susfs: ""
+        - ksu: _nonroot
+        - ksu: ""
+          susfs: _susfs
+        - ksu: _kabasu
+          susfs: _susfs
+        - ksu: _ksuFork
+          susfs: _susfs
+        - ksu: _ksunV3
+          susfs: ""
+        - ksu: _ksunV1
+          susfs: ""
+        - ksu: bakasu
+          susfs: ""
 
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
 
