@@ -72,7 +72,7 @@ jobs:
           - ksu: _nonroot
           - ksu: ""
             susfs: _susfs
-          - ksu: _resukisu
+          - ksu: _kabasu
             susfs: _susfs
           - ksu: _ksuFork
             susfs: _susfs
@@ -214,15 +214,16 @@ jobs:
           else
             scripts/config -e CONFIG_KSU_SUSFS
             if [ "${{ matrix.ksu }}" = "_bakasu" ]; then
-              scripts/config -e CONFIG_KSU_SUSFS_SUS_PATH
-              scripts/config -e CONFIG_KSU_SUSFS_SUS_MOUNT
-              scripts/config -e CONFIG_KSU_SUSFS_SUS_KSTAT
-              scripts/config -e CONFIG_KSU_SUSFS_SPOOF_UNAME
-              scripts/config -d CONFIG_KSU_SUSFS_ENABLE_LOG
-              scripts/config -e CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
-              scripts/config -e CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
-              scripts/config -e CONFIG_KSU_SUSFS_OPEN_REDIRECT
-              scripts/config -e CONFIG_KSU_SUSFS_SUS_MAP
+              scripts/config -e KSU_SUSFS_SUS_PATH
+              scripts/config -e KSU_SUSFS_SUS_MOUNT
+              scripts/config -e KSU_SUSFS_SUS_KSTAT
+              scripts/config -e KSU_SUSFS_SPOOF_UNAME
+              scripts/config -e KSU_SUSFS_ENABLE_LOG
+              scripts/config -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+              scripts/config -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
+              scripts/config -e KSU_SUSFS_OPEN_REDIRECT
+              scripts/config -e KSU_SUSFS_SUS_MAP
+              scripts/config -e KSU_SUSFS_PRIORITY_UID_FILTER
             else
               scripts/config -d CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
             fi 
