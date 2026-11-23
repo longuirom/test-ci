@@ -148,10 +148,6 @@ jobs:
           echo "ANDROID_MAJOR_VERSION=s" >> $GITHUB_ENV
           echo "TIME=${INPUT_TIME:-$(date +%y%m%d)}" >> $GITHUB_ENV
 
-          if [ -n "$INPUT_TIME" ]; then
-            echo "KBUILD_BUILD_TIMESTAMP=$(date -d "20${INPUT_TIME:0:2}-${INPUT_TIME:2:2}-${INPUT_TIME:4:2} 00:00:00" '+%a %b %d %H:%M:%S UTC %Y')" >> $GITHUB_ENV
-          fi
-
       - name: Restore Clang toolchain
         uses: actions/cache/restore@v6
         with:
