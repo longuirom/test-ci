@@ -82,11 +82,19 @@ jobs:
           susfs: ""
         - ksu: _bakasu
           susfs: ""
+        - ksu: _FinaSU
+          susfs: ""
 
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
 
     env:
-      TARGET_REF: ${{ matrix.ksu == '_ksuFork' && inputs.branch_1 || matrix.ksu == '_ksunV3' && inputs.branch_3 || matrix.ksu == '_bakasu' && 'release-bakasu' || inputs.branch_1 }}
+      TARGET_REF: ${{
+        matrix.ksu == '_ksuFork' && inputs.branch_1 ||
+        matrix.ksu == '_ksunV3' && inputs.branch_3 ||
+        matrix.ksu == '_bakasu' && 'release-bakasu' ||
+        matrix.ksu == '_FinaSU' && 'release-bakasu' ||
+        inputs.branch_1
+      }}
       CLANG_VERSION: 10032024
 
     steps:
@@ -187,6 +195,9 @@ jobs:
             "_bakasu_"|"_bakasu__susfs")
               git clone --depth=1 https://github.com/longuirom/BakaSU KernelSU
               ;;
+            "_FinaSU"|"_FinaSU__susfs")
+              git clone --depth=1 https://github.com/longuirom/FinaSU KernelSU
+              ;;
             *)
               git clone --depth=1 -b v1.1.1 https://github.com/longuirom/KernelSU-Next KernelSU
               ;;
@@ -233,7 +244,7 @@ jobs:
           fi
 
           # bakasu extra
-          if [ "${{ matrix.ksu }}" = "_bakasu" ]; then
+          if [[ "${{ matrix.ksu }}" = "_bakasu" || "${{ matrix.ksu }}" = "_FinaSU" ]]; then
             scripts/config -e KSU_MANUAL_HOOK_AUTO_SETUID_HOOK
             scripts/config -e KSU_MANUAL_HOOK_AUTO_INITRC_HOOK
             scripts/config -e KSU_MANUAL_HOOK_AUTO_INPUT_HOOK
