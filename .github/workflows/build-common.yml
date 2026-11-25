@@ -88,13 +88,14 @@ jobs:
     name: "${{ matrix.device }}${{ matrix.ksu }}${{ matrix.susfs }}"
 
     env:
-      TARGET_REF: ${{
-        matrix.ksu == '_ksuFork' && inputs.branch_1 ||
-        matrix.ksu == '_ksunV3' && inputs.branch_3 ||
-        matrix.ksu == '_bakasu' && 'release-bakasu' ||
-        matrix.ksu == '_FinaSU' && 'release-bakasu' ||
-        inputs.branch_1
-      }}
+      TARGET_REF: >-
+        ${{
+          matrix.ksu == '_ksuFork' && inputs.branch_1 ||
+          matrix.ksu == '_ksunV3' && inputs.branch_3 ||
+          matrix.ksu == '_bakasu' && 'release-bakasu' ||
+          matrix.ksu == '_FinaSU' && 'release-bakasu' ||
+          inputs.branch_1
+        }}
       CLANG_VERSION: 10032024
 
     steps:
